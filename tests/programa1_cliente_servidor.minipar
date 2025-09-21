@@ -1,0 +1,68 @@
+programa_minipar
+
+# ----------------- Canal de comunicação -----------------
+c_channel calculadora computador_1 computador_2
+
+# ----------------- Declaração de variáveis -----------------
+SEQ
+    Int valor1, valor2
+    String operacao
+    String resultado
+
+# ----------------- Execução paralela -----------------
+PAR
+    # ----- Cliente (computador_1) -----
+    SEQ
+        Output("=== Calculadora MiniPar ===\n")
+        Output("Operações disponíveis: +, -, *, /\n")
+
+        Input("Digite a operação: ", operacao)
+        Input("Digite o primeiro valor: ", valor1)
+        Input("Digite o segundo valor: ", valor2)
+
+        # Enviar dados para o servidor
+        calculadora.send(operacao, valor1, valor2, resultado)
+
+        # Receber o resultado do servidor
+        calculadora.receive(operacao, valor1, valor2, resultado)
+
+        Output("\nResultado da operação: ", resultado, "\n")
+
+    # ----- Servidor (computador_2) -----
+    SEQ
+        Output("Servidor aguardando conexão...\n")
+
+        # Recebe dados do cliente
+        calculadora.receive(operacao, valor1, valor2, resultado)
+
+        Output("Operação recebida: ", valor1, operacao, valor2, "\n")
+
+        # Processa operação
+        if (operacao == '+') {
+            resultado = valor1 + valor2
+        }
+        else if (operacao == '-') {
+            resultado = valor1 - valor2
+        }
+        else if (operacao == '*') {
+            resultado = valor1 * valor2
+        }
+        else if (operacao == '/') {
+            if (valor2 == 0) {
+                resultado = "Erro: divisão por zero"
+            }
+            else {
+                resultado = valor1 / valor2
+            }
+        }
+        else {
+            resultado = "Operação inválida"
+        }
+
+        Output("Enviando resultado: ", resultado, "\n")
+
+        # Envia resultado de volta para o cliente
+        calculadora.send(operacao, valor1, valor2, resultado)
+
+        Output("Fim da execução servidor\n")
+SEQ

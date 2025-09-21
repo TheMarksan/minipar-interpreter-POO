@@ -1,0 +1,52 @@
+# ----------------- Funções -----------------
+
+Int input_int(String mensagem) {
+    print(mensagem);
+    Int valor;
+    valor = 0;  # Simulação de entrada, pode ser substituída por input()
+    return valor;
+}
+
+Int calcular_fatorial(Int n) {
+    Int fatorial;
+    fatorial = 1;
+    for i = 1; i <= n; i = i + 1 {
+        fatorial = fatorial * i;
+    }
+    return fatorial;
+}
+
+void thread_fatorial() {
+    Int n;
+    n = input_int("Digite um número para calcular o fatorial: ");
+    Int fatorial;
+    fatorial = calcular_fatorial(n);
+    print("Fatorial de " + n + " é " + fatorial);
+}
+
+void thread_fibonacci() {
+    Int n;
+    n = input_int("Digite a quantidade de termos da Série de Fibonacci: ");
+    Int a, b, temp, i;
+    a = 0;
+    b = 1;
+    print("Série de Fibonacci com " + n + " termos:");
+    for i = 0; i < n; i = i + 1 {
+        print(a);
+        temp = a + b;
+        a = b;
+        b = temp;
+    }
+}
+
+# ----------------- Execução -----------------
+
+SEQ
+    print("Início da execução paralela (PAR)");
+
+    PAR
+        thread_fatorial();
+        thread_fibonacci();
+    SEQ
+
+    print("Execução paralela finalizada.");

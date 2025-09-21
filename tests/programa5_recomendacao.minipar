@@ -1,0 +1,211 @@
+# ----------------- Classes -----------------
+
+class Produto {
+    String nome;
+
+    void __init__() {
+        nome = "";  # Inicializa string vazia
+    }
+}
+
+class Categoria {
+    String nome;
+    Produto produtos[4];
+
+    void __init__() {
+        nome = "";
+        for i = 0; i < 4; i = i + 1 {
+            produtos[i] = new Produto();
+            produtos[i].__init__();  # Inicializa cada produto
+        }
+    }
+}
+
+class Usuario {
+    String historico_compras[4];
+
+    void __init__() {
+        for i = 0; i < 4; i = i + 1 {
+            historico_compras[i] = "";
+        }
+    }
+
+    Int[] codificar_historico(String todos_produtos[16]) {
+        Int codificacao[16];
+        SEQ
+            for i = 0; i < 16; i = i + 1 {
+                codificacao[i] = 0;
+                for j = 0; j < 4; j = j + 1 {
+                    if (todos_produtos[i] == historico_compras[j]) {
+                        codificacao[i] = 1;
+                    }
+                }
+            }
+        return codificacao;
+    }
+}
+
+class RedeNeural {
+    Int W1[16][10];
+    Int b1[10];
+    Int W2[10][16];
+    Int b2[16];
+
+    void __init__() {
+        SEQ
+            for i = 0; i < 16; i = i + 1 {
+                for j = 0; j < 10; j = j + 1 { W1[i][j] = 1; }
+            }
+            for i = 0; i < 10; i = i + 1 { b1[i] = 1; }
+            for i = 0; i < 10; i = i + 1 {
+                for j = 0; j < 16; j = j + 1 { W2[i][j] = 1; }
+            }
+            for i = 0; i < 16; i = i + 1 { b2[i] = 1; }
+    }
+
+    Int[] relu(Int x[10]) {
+        Int y[10];
+        SEQ
+            for i = 0; i < 10; i = i + 1 {
+                if (x[i] > 0) { y[i] = x[i]; } else { y[i] = 0; }
+            }
+        return y;
+    }
+
+    Int[] forward(Int X[16]) {
+        Int Z1[10];
+        Int A1[10];
+        Int Z2[16];
+        Int A2[16];
+        SEQ
+            for i = 0; i < 10; i = i + 1 {
+                Z1[i] = b1[i];
+                for j = 0; j < 16; j = j + 1 {
+                    Z1[i] = Z1[i] + X[j] * W1[j][i];
+                }
+            }
+            A1 = relu(Z1);
+            for i = 0; i < 16; i = i + 1 {
+                Z2[i] = b2[i];
+                for j = 0; j < 10; j = j + 1 {
+                    Z2[i] = Z2[i] + A1[j] * W2[j][i];
+                }
+                if (Z2[i] > 0) { A2[i] = 1; } else { A2[i] = 0; }
+            }
+        return A2;
+    }
+}
+
+class Recomendador {
+    Usuario usuario;
+    Categoria categorias[4];
+    String todos_produtos[16];
+
+    void __init__() {
+        for i = 0; i < 16; i = i + 1 { todos_produtos[i] = ""; }
+        # Montar lista de todos produtos
+        Int count = 0;
+        SEQ
+            for i = 0; i < 4; i = i + 1 {
+                for j = 0; j < 4; j = j + 1 {
+                    todos_produtos[count] = categorias[i].produtos[j].nome;
+                    count = count + 1;
+                }
+            }
+    }
+
+    String[] recomendar() {
+        Int entrada_codificada[16];
+        Int saida[16];
+        String recomendacoes[16];
+        Int count = 0;
+        PAR
+            # Thread 1: codificar histórico
+            entrada_codificada = usuario.codificar_historico(todos_produtos);
+
+            # Thread 2: calcular rede neural
+            RedeNeural rede;
+            saida = rede.forward(entrada_codificada);
+        SEQ
+            # Gerar recomendações
+            for i = 0; i < 16; i = i + 1 {
+                if (saida[i] > 0) {
+                    Int comprado = 0;
+                    for j = 0; j < 4; j = j + 1 {
+                        if (todos_produtos[i] == usuario.historico_compras[j]) {
+                            comprado = 1;
+                        }
+                    }
+                    if (comprado == 0) {
+                        recomendacoes[count] = todos_produtos[i];
+                        count = count + 1;
+                    }
+                }
+            }
+        return recomendacoes;
+    }
+}
+
+# ----------------- Execução -----------------
+
+SEQ
+    Categoria categorias[4];
+    for i = 0; i < 4; i = i + 1 {
+        categorias[i] = new Categoria();
+        categorias[i].__init__();
+    }
+
+    Usuario usuario;
+    usuario = new Usuario();
+    usuario.__init__();
+
+    Recomendador recomendador;
+    recomendador = new Recomendador();
+    recomendador.usuario = usuario;
+
+    for i = 0; i < 4; i = i + 1 {
+        recomendador.categorias[i] = categorias[i];
+    }
+    recomendador.__init__();
+
+    # Inicializar categorias e produtos
+    categorias[0].nome = "Eletrônicos";
+    categorias[0].produtos[0].nome = "Smartphone";
+    categorias[0].produtos[1].nome = "Laptop";
+    categorias[0].produtos[2].nome = "Tablet";
+    categorias[0].produtos[3].nome = "Fones de ouvido";
+
+    categorias[1].nome = "Roupas";
+    categorias[1].produtos[0].nome = "Camisa";
+    categorias[1].produtos[1].nome = "Jeans";
+    categorias[1].produtos[2].nome = "Jaqueta";
+    categorias[1].produtos[3].nome = "Sapatos";
+
+    categorias[2].nome = "Eletrodomésticos";
+    categorias[2].produtos[0].nome = "Geladeira";
+    categorias[2].produtos[1].nome = "Micro-ondas";
+    categorias[2].produtos[2].nome = "Máquina de lavar";
+    categorias[2].produtos[3].nome = "Ar-condicionado";
+
+    categorias[3].nome = "Livros";
+    categorias[3].produtos[0].nome = "Ficção";
+    categorias[3].produtos[1].nome = "Não-ficção";
+    categorias[3].produtos[2].nome = "Ficção científica";
+    categorias[3].produtos[3].nome = "Fantasia";
+
+    # Inicializar usuário
+    usuario.historico_compras[0] = "Smartphone";
+    usuario.historico_compras[1] = "Jeans";
+    usuario.historico_compras[2] = "Micro-ondas";
+    usuario.historico_compras[3] = "Ficção";
+
+    # Obter recomendações
+    String produtos_recomendados[16];
+    produtos_recomendados = recomendador.recomendar();
+
+    # Imprimir resultados
+    for i = 0; i < 16; i = i + 1 {
+        if (produtos_recomendados[i] != "") {
+            print(produtos_recomendados[i]);
+        }
+    }

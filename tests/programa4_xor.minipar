@@ -1,0 +1,131 @@
+# ----------------- Funções auxiliares -----------------
+
+# MiniPar não tem math.exp, então usamos aproximação simples de sigmoid
+Float sigmoid(Float x) {
+    Float result;
+    result = 1 / (1 + 2.71828 ^ (-x));  # e ≈ 2.71828
+    return result;
+}
+
+Float sigmoid_derivative(Float x) {
+    return x * (1 - x);
+}
+
+# ----------------- Classes -----------------
+
+class Neuronio {
+    Float pesos[2];
+    Float bias;
+    Float saida;
+
+    void __init__() {
+        # Inicializa pesos e bias manualmente
+        pesos[0] = 0.5; pesos[1] = 0.5;
+        bias = 0.5;
+        saida = 0;
+    }
+
+    Float feedforward(Float entradas[2]) {
+        Float soma;
+        soma = entradas[0] * pesos[0] + entradas[1] * pesos[1] + bias;
+        saida = sigmoid(soma);
+        return saida;
+    }
+
+    Float calcular_derivada() {
+        return sigmoid_derivative(saida);
+    }
+}
+
+class RedeNeural {
+    Neuronio camada_oculta[3];
+    Neuronio neuronio_saida;
+    Float taxa_aprendizado;
+
+    void __init__() {
+        taxa_aprendizado = 0.2;
+        for i = 0; i < 3; i = i + 1 {
+            camada_oculta[i] = new Neuronio();
+            camada_oculta[i].__init__();
+        }
+        neuronio_saida = new Neuronio();
+        neuronio_saida.__init__();
+    }
+
+    void feedforward(Float entradas[2], Float saidas_ocultas[3], Float &saida_final) {
+        for i = 0; i < 3; i = i + 1 {
+            saidas_ocultas[i] = camada_oculta[i].feedforward(entradas);
+        }
+        Float entradas_saida[3];
+        for i = 0; i < 3; i = i + 1 { entradas_saida[i] = saidas_ocultas[i]; }
+        saida_final = neuronio_saida.feedforward(entradas_saida);
+    }
+
+    void backpropagation(Float entradas[2], Float saida_desejada, Float saidas_ocultas[3], Float saida_final) {
+        Float erro;
+        Float delta_saida;
+        erro = saida_desejada - saida_final;
+        delta_saida = erro * neuronio_saida.calcular_derivada();
+
+        # Atualiza pesos camada saída
+        for i = 0; i < 3; i = i + 1 {
+            neuronio_saida.pesos[i] = neuronio_saida.pesos[i] + saidas_ocultas[i] * delta_saida * taxa_aprendizado;
+        }
+        neuronio_saida.bias = neuronio_saida.bias + delta_saida * taxa_aprendizado;
+
+        # Atualiza pesos camada oculta
+        for i = 0; i < 3; i = i + 1 {
+            Float delta_oculto;
+            delta_oculto = delta_saida * neuronio_saida.pesos[i] * camada_oculta[i].calcular_derivada();
+            for j = 0; j < 2; j = j + 1 {
+                camada_oculta[i].pesos[j] = camada_oculta[i].pesos[j] + entradas[j] * delta_oculto * taxa_aprendizado;
+            }
+            camada_oculta[i].bias = camada_oculta[i].bias + delta_oculto * taxa_aprendizado;
+        }
+    }
+
+    void treinar(Float entradas[4][2], Float saidas_desejadas[4], Int epocas) {
+        Int e, i;
+        Float saidas_ocultas[3];
+        Float saida_final;
+        for e = 0; e < epocas; e = e + 1 {
+            for i = 0; i < 4; i = i + 1 {
+                feedforward(entradas[i], saidas_ocultas, saida_final);
+                backpropagation(entradas[i], saidas_desejadas[i], saidas_ocultas, saida_final);
+            }
+        }
+    }
+
+    void testar(Float entradas[4][2]) {
+        Int i;
+        Float saidas_ocultas[3];
+        Float saida_final;
+        for i = 0; i < 4; i = i + 1 {
+            feedforward(entradas[i], saidas_ocultas, saida_final);
+            print("Input: " + entradas[i][0] + "," + entradas[i][1] + " Predicted Output: " + saida_final);
+        }
+    }
+}
+
+# ----------------- Execução -----------------
+
+SEQ
+    RedeNeural rede;
+    rede = new RedeNeural();
+    rede.__init__();
+
+    # Dados XOR
+    Float entradas[4][2];
+    entradas[0][0] = 0; entradas[0][1] = 0;
+    entradas[1][0] = 0; entradas[1][1] = 1;
+    entradas[2][0] = 1; entradas[2][1] = 0;
+    entradas[3][0] = 1; entradas[3][1] = 1;
+
+    Float saidas_desejadas[4];
+    saidas_desejadas[0] = 0;
+    saidas_desejadas[1] = 1;
+    saidas_desejadas[2] = 1;
+    saidas_desejadas[3] = 0;
+
+    rede.treinar(entradas, saidas_desejadas, 10000);
+    rede.testar(entradas);

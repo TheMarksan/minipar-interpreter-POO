@@ -1,0 +1,115 @@
+# Quicksort em MiniPar 2025.1 (orientação a objetos)
+# Pressupõe funções runtime: input(), split(s, sep), to_int(s), len(arr)
+
+class Utils {
+    # Converte uma linha de entrada "1 2 3" em um int[]
+    int[] parseIntArray() {
+        string linha = input();                # lê a linha inteira
+        string[] partes = split(linha, " ");   # divide por espaço
+        int n = len(partes);
+        int[] arr = new int[n];
+        int i = 0;
+        while (i < n) {
+            arr[i] = to_int(partes[i]);
+            i = i + 1;
+        }
+        return arr;
+    }
+}
+
+class Quicksort {
+    int[] array;
+
+    # define o array a ordenar (atributo)
+    void setArray(int[] arr) {
+        array = arr;
+    }
+
+    # método público para ordenar
+    void ordenar() {
+        if (array == null) {
+            print("Array não definido.");
+            return;
+        }
+        int n = len(array);
+        if (n > 1) {
+            this._quicksort(0, n - 1);
+        }
+    }
+
+    # _quicksort recursivo in-place (low..high)
+    void _quicksort(int low, int high) {
+        if (low < high) {
+            int pivotIndex = this.partition(low, high);
+            this._quicksort(low, pivotIndex - 1);
+            this._quicksort(pivotIndex + 1, high);
+        }
+    }
+
+    # partition usando o primeiro elemento como pivot (lomuto-like)
+    int partition(int low, int high) {
+        int pivot = array[high];    # usar último elemento como pivot (mais estável)
+        int i = low - 1;
+        int j = low;
+        while (j <= high - 1) {
+            if (array[j] <= pivot) {
+                i = i + 1;
+                this.swap(i, j);
+            }
+            j = j + 1;
+        }
+        this.swap(i + 1, high);
+        return i + 1;
+    }
+
+    # troca dois elementos do array
+    void swap(int i, int j) {
+        int tmp = array[i];
+        array[i] = array[j];
+        array[j] = tmp;
+    }
+
+    # imprime o array no formato [a, b, c]
+    void printArray() {
+        int n = len(array);
+        string s = "[";
+        int k = 0;
+        while (k < n) {
+            s = s + str(array[k]);
+            if (k < n - 1) {
+                s = s + ", ";
+            }
+            k = k + 1;
+        }
+        s = s + "]";
+        print(s);
+    }
+}
+
+class InterfaceOrdenacao {
+    void iniciar() {
+        print("==== Ordenação com Quicksort ====");
+        print("Insira os elementos do vetor separados por espaço (ex: 10 -3 5 0):");
+
+        Utils u = new Utils();
+        int[] array = u.parseIntArray();
+
+        print("Vetor original:");
+        # imprimir array original
+        Quicksort tmpQ = new Quicksort();
+        tmpQ.setArray(array);
+        tmpQ.printArray();
+
+        # ordenar
+        Quicksort algoritmo = new Quicksort();
+        algoritmo.setArray(array);
+        algoritmo.ordenar();
+
+        print("Vetor ordenado:");
+        algoritmo.printArray();
+    }
+}
+
+# Programa principal (instancia e executa)
+InterfaceOrdenacao app = new InterfaceOrdenacao();
+app.iniciar();
