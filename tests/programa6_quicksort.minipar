@@ -1,115 +1,132 @@
-# Quicksort em MiniPar 2025.1 (orientação a objetos)
-# Pressupõe funções runtime: input(), split(s, sep), to_int(s), len(arr)
+# ----------------- Classes -----------------
 
-class Utils {
-    # Converte uma linha de entrada "1 2 3" em um int[]
-    int[] parseIntArray() {
-        string linha = input();                # lê a linha inteira
-        string[] partes = split(linha, " ");   # divide por espaço
-        int n = len(partes);
-        int[] arr = new int[n];
-        int i = 0;
-        while (i < n) {
-            arr[i] = to_int(partes[i]);
-            i = i + 1;
-        }
-        return arr;
-    }
-}
+CLASS Quicksort {
+    INT array[100];  # Suporta até 100 elementos
+    INT n;
 
-class Quicksort {
-    int[] array;
-
-    # define o array a ordenar (atributo)
-    void setArray(int[] arr) {
-        array = arr;
-    }
-
-    # método público para ordenar
-    void ordenar() {
-        if (array == null) {
-            print("Array não definido.");
-            return;
-        }
-        int n = len(array);
-        if (n > 1) {
-            this._quicksort(0, n - 1);
+    VOID __init__() {
+        SEQ {
+            # Inicializa array e tamanho
+            n = 0;
         }
     }
 
-    # _quicksort recursivo in-place (low..high)
-    void _quicksort(int low, int high) {
-        if (low < high) {
-            int pivotIndex = this.partition(low, high);
-            this._quicksort(low, pivotIndex - 1);
-            this._quicksort(pivotIndex + 1, high);
-        }
-    }
-
-    # partition usando o primeiro elemento como pivot (lomuto-like)
-    int partition(int low, int high) {
-        int pivot = array[high];    # usar último elemento como pivot (mais estável)
-        int i = low - 1;
-        int j = low;
-        while (j <= high - 1) {
-            if (array[j] <= pivot) {
-                i = i + 1;
-                this.swap(i, j);
+    VOID setArray(INT arr[100], INT tamanho) {
+        SEQ {
+            n = tamanho;
+            INT i;
+            for i = 0; i < n; i = i + 1 {
+                array[i] = arr[i];
             }
-            j = j + 1;
         }
-        this.swap(i + 1, high);
-        return i + 1;
     }
 
-    # troca dois elementos do array
-    void swap(int i, int j) {
-        int tmp = array[i];
-        array[i] = array[j];
-        array[j] = tmp;
+    INT[] ordenar() {
+        SEQ {
+            return this._quicksort(array, n);
+        }
     }
 
-    # imprime o array no formato [a, b, c]
-    void printArray() {
-        int n = len(array);
-        string s = "[";
-        int k = 0;
-        while (k < n) {
-            s = s + str(array[k]);
-            if (k < n - 1) {
-                s = s + ", ";
+    INT[] _quicksort(INT arr[100], INT tamanho) {
+        SEQ {
+            if (tamanho <= 1) {
+                return arr;
+            } ELSE {
+                # pivot = arr[0]
+                INT pivot;
+                pivot = arr[0];
+
+                INT menores[100];
+                INT maiores[100];
+                INT count_menores;
+                INT count_maiores;
+                count_menores = 0;
+                count_maiores = 0;
+
+                INT i;
+                for i = 1; i < tamanho; i = i + 1 {
+                    if (arr[i] <= pivot) {
+                        menores[count_menores] = arr[i];
+                        count_menores = count_menores + 1;
+                    } ELSE {
+                        maiores[count_maiores] = arr[i];
+                        count_maiores = count_maiores + 1;
+                    }
+                }
+
+                INT sorted_menores[100];
+                INT sorted_maiores[100];
+                sorted_menores = this._quicksort(menores, count_menores);
+                sorted_maiores = this._quicksort(maiores, count_maiores);
+
+                # Combinar sorted_menores + pivot + sorted_maiores
+                INT resultado[100];
+                INT idx;
+                idx = 0;
+                for i = 0; i < count_menores; i = i + 1 {
+                    resultado[idx] = sorted_menores[i];
+                    idx = idx + 1;
+                }
+                resultado[idx] = pivot;
+                idx = idx + 1;
+                for i = 0; i < count_maiores; i = i + 1 {
+                    resultado[idx] = sorted_maiores[i];
+                    idx = idx + 1;
+                }
+
+                return resultado;
             }
-            k = k + 1;
         }
-        s = s + "]";
-        print(s);
     }
 }
 
-class InterfaceOrdenacao {
-    void iniciar() {
-        print("==== Ordenação com Quicksort ====");
-        print("Insira os elementos do vetor separados por espaço (ex: 10 -3 5 0):");
+CLASS InterfaceOrdenacao {
+    VOID iniciar() {
+        SEQ {
+            PRINT("==== Ordenação com Quicksort ====");
+            PRINT("Insira os elementos do vetor separados por espaço:");
 
-        Utils u = new Utils();
-        int[] array = u.parseIntArray();
+            STRING entrada;
+            entrada = INPUT();
 
-        print("Vetor original:");
-        # imprimir array original
-        Quicksort tmpQ = new Quicksort();
-        tmpQ.setArray(array);
-        tmpQ.printArray();
+            INT arr[100];
+            INT n;
+            n = 0;
 
-        # ordenar
-        Quicksort algoritmo = new Quicksort();
-        algoritmo.setArray(array);
-        algoritmo.ordenar();
+            # Converter entrada em inteiros
+            STRING partes[100];
+            partes = SPLIT(entrada, " ");  # SPLIT é função runtime
+            INT i;
+            for i = 0; i < LEN(partes); i = i + 1 {
+                arr[i] = TO_INT(partes[i]);
+                n = n + 1;
+            }
 
-        print("Vetor ordenado:");
-        algoritmo.printArray();
+            PRINT("Vetor original:");
+            for i = 0; i < n; i = i + 1 {
+                PRINT(arr[i]);
+            }
+
+            # Criar Quicksort e ordenar
+            Quicksort qs;
+            qs = NEW Quicksort();
+            qs.__init__();
+            qs.setArray(arr, n);
+            INT sorted[100];
+            sorted = qs.ordenar();
+
+            PRINT("Vetor ordenado:");
+            for i = 0; i < n; i = i + 1 {
+                PRINT(sorted[i]);
+            }
+        }
     }
 }
 
-# Programa principal (instancia e executa)
-InterfaceOrdenacao app = new InterfaceOrdenacao();
-app.iniciar();
+# ----------------- Execução -----------------
+SEQ {
+    InterfaceOrdenacao interface;
+    interface = NEW InterfaceOrdenacao();
+    interface.__init__();
+    interface.iniciar();
+}

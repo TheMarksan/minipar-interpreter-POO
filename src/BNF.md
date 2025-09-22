@@ -1,7 +1,13 @@
 # BNF Completa MiniPar 2025.1 - Orientado a Objeto
 
 ```bnf
-<programa_minipar> ::= { <classe> }
+<programa_minipar> ::= { <comentario> | <classe> | <funcao> }
+
+# ------------------- Comentários -------------------
+<comentario> ::= "#" { <caractere> } 
+
+# ------------------- Funções -------------------
+<funcao> ::= <tipo_retorno> <identificador>() { <bloco_stmt> }
 
 # ------------------- Classes -------------------
 <classe> ::= CLASS <identificador> [ EXTENDS <identificador> ] 
@@ -14,9 +20,9 @@
 
 <declaracao_metodo> ::= <tipo_retorno> <identificador>() { <bloco_stmt> }
 
-<tipo_retorno> ::= VOID | INT | FLOAT | STRING | <identificador>  # tipo de classe permitido
+<tipo_retorno> ::= VOID | INT | FLOAT | STRING | <identificador>
 
-<tipo_var> ::= BOOL | INT | FLOAT | STRING | <identificador>      # variáveis ou canal de comunicação
+<tipo_var> ::= BOOL | INT | FLOAT | STRING | <identificador> | C_CHANNEL
 
 # ------------------- Blocos SEQ/PAR -------------------
 <bloco_stmt> ::= <bloco_SEQ> | <bloco_PAR>
@@ -32,9 +38,12 @@
           | <for_stmt>
           | <instanciacao>
           | <chamada_metodo>
+          | <chamada_funcao>
           | <print_comando>
+          | <input_comando>
           | <send>
           | <receive>
+          | <comentario>
 
 <atribuicao> ::= <identificador> = <expr>
 
@@ -48,13 +57,17 @@
 
 <chamada_metodo> ::= <identificador>.<identificador>()
 
-<print_comando> ::= PRINT ( <texto> )
+<chamada_funcao> ::= <identificador>() 
+
+<print_comando> ::= PRINT( <texto> | <expr> )
+
+<input_comando> ::= <identificador> = INPUT( [ <texto> ] )
 
 <send> ::= <identificador>.SEND( { <expr> | <identificador> }+ )
 
 <receive> ::= <identificador>.RECEIVE( { <identificador> }+ )
 
-# ------------------- Expressões com precedência -------------------
+# ------------------- Expressões -------------------
 <expr> ::= <expr_aditivo>
 
 <expr_aditivo> ::= <expr_aditivo> + <expr_multiplicativo>
@@ -85,4 +98,3 @@
 <digito> ::= "0" | ... | "9"
 
 <caractere> ::= qualquer símbolo visível (exceto aspas internas)
-
