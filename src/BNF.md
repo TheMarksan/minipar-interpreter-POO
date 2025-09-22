@@ -4,7 +4,7 @@
 <programa_minipar> ::= { <comentario> | <classe> | <funcao> }
 
 # ------------------- Comentários -------------------
-<comentario> ::= "#" { <caractere> } 
+<comentario> ::= "#" { <caractere> }
 
 # ------------------- Funções -------------------
 <funcao> ::= <tipo_retorno> <identificador>() { <bloco_stmt> }
@@ -24,14 +24,12 @@
 
 <tipo_var> ::= BOOL | INT | FLOAT | STRING | <identificador> | C_CHANNEL
 
-# ------------------- Blocos SEQ/PAR -------------------
-<bloco_stmt> ::= <bloco_SEQ> | <bloco_PAR>
+# ------------------- Blocos SEQ/PAR aninháveis -------------------
+<bloco_stmt> ::= SEQ { <stmts_lista> } 
+               | PAR { <stmts_lista> }
 
-<bloco_SEQ> ::= SEQ { { <stmts> } }
+<stmts_lista> ::= { <stmts> }
 
-<bloco_PAR> ::= PAR { { <stmts> } }
-
-# ------------------- Comandos -------------------
 <stmts> ::= <atribuicao>
           | <if_stmt>
           | <while_stmt>
@@ -43,15 +41,17 @@
           | <input_comando>
           | <send>
           | <receive>
+          | <bloco_stmt>     # Permite blocos SEQ/PAR dentro de outros blocos
           | <comentario>
 
+# ------------------- Comandos -------------------
 <atribuicao> ::= <identificador> = <expr>
 
-<if_stmt> ::= IF <condicao> { { <stmts> } } [ ELSE { { <stmts> } } ]
+<if_stmt> ::= IF <condicao> { <stmts_lista> } [ ELSE { <stmts_lista> } ]
 
-<while_stmt> ::= WHILE <condicao> { { <stmts> } }
+<while_stmt> ::= WHILE <condicao> { <stmts_lista> }
 
-<for_stmt> ::= FOR <identificador> = <expr>; <condicao>; <incremento> { { <stmts> } }
+<for_stmt> ::= FOR <identificador> = <expr>; <condicao>; <incremento> { <stmts_lista> }
 
 <instanciacao> ::= <identificador> <identificador> = NEW <identificador>()
 
