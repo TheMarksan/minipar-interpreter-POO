@@ -10,7 +10,7 @@
 <funcao> ::= <tipo_retorno> <identificador>() { <bloco_stmt> }
 
 # ------------------- Classes -------------------
-<classe> ::= CLASS <identificador> [ EXTENDS <identificador> ] 
+<classe> ::= class <identificador> [ extends <identificador> ] 
             { 
                 { <declaracao_atributo> } 
                 { <declaracao_metodo> } 
@@ -20,13 +20,13 @@
 
 <declaracao_metodo> ::= <tipo_retorno> <identificador>() { <bloco_stmt> }
 
-<tipo_retorno> ::= VOID | INT | FLOAT | STRING | <identificador>
+<tipo_retorno> ::= void | int | float | string | <identificador>
 
-<tipo_var> ::= BOOL | INT | FLOAT | STRING | <identificador> | C_CHANNEL
+<tipo_var> ::= bool | int | float | string | <identificador> | c_channel
 
 # ------------------- Blocos SEQ/PAR aninháveis -------------------
-<bloco_stmt> ::= SEQ { <stmts_lista> } 
-               | PAR { <stmts_lista> }
+<bloco_stmt> ::= seq { <stmts_lista> } 
+               | par { <stmts_lista> }
 
 <stmts_lista> ::= { <stmts> }
 
@@ -47,25 +47,25 @@
 # ------------------- Comandos -------------------
 <atribuicao> ::= <identificador> = <expr>
 
-<if_stmt> ::= IF <condicao> { <stmts_lista> } [ ELSE { <stmts_lista> } ]
+<if_stmt> ::= if <condicao> { <stmts_lista> } [ else { <stmts_lista> } ]
 
-<while_stmt> ::= WHILE <condicao> { <stmts_lista> }
+<while_stmt> ::= while <condicao> { <stmts_lista> }
 
-<for_stmt> ::= FOR <identificador> = <expr>; <condicao>; <incremento> { <stmts_lista> }
+<for_stmt> ::= for <identificador> = <expr>; <condicao>; <incremento> { <stmts_lista> }
 
-<instanciacao> ::= <identificador> <identificador> = NEW <identificador>()
+<instanciacao> ::= <identificador> <identificador> = new <identificador>()
 
 <chamada_metodo> ::= <identificador>.<identificador>()
 
 <chamada_funcao> ::= <identificador>() 
 
-<print_comando> ::= PRINT( <texto> | <expr> )
+<print_comando> ::= print( <texto> | <expr> )
 
-<input_comando> ::= <identificador> = INPUT( [ <texto> ] )
+<input_comando> ::= <identificador> = input( [ <texto> ] )
 
-<send> ::= <identificador>.SEND( { <expr> | <identificador> }+ )
+<send> ::= <identificador>.send( { <expr> | <identificador> }+ )
 
-<receive> ::= <identificador>.RECEIVE( { <identificador> }+ )
+<receive> ::= <identificador>.receive( { <identificador> }+ )
 
 # ------------------- Expressões -------------------
 <expr> ::= <expr_aditivo>
