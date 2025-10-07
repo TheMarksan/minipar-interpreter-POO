@@ -1,0 +1,137 @@
+# ----------------- Funções auxiliares -----------------
+FLOAT sigmoid(FLOAT x) {
+    return 1 / (1 + 2.71828 ^ (-x));  # e ≈ 2.71828
+}
+
+FLOAT sigmoid_derivative(FLOAT x) {
+    return x * (1 - x);
+}
+
+# ----------------- Classes -----------------
+CLASS Neuronio {
+    FLOAT pesos[3];   # máximo de 3 entradas
+    FLOAT bias;
+    FLOAT saida;
+
+    VOID __init__(INT num_inputs) {
+        SEQ {
+            INT i;
+            for i = 0; i < num_inputs; i = i + 1 {
+                pesos[i] = 0.5;  # inicialização fixa
+            }
+            bias = 0.5;
+            saida = 0;
+        }
+    }
+
+    FLOAT feedforward(FLOAT entradas[3], INT n_inputs) {
+        FLOAT soma;
+        soma = 0;
+        INT i;
+        for i = 0; i < n_inputs; i = i + 1 {
+            soma = soma + entradas[i] * pesos[i];
+        }
+        soma = soma + bias;
+        saida = sigmoid(soma);
+        return saida;
+    }
+
+    FLOAT calcular_derivada() {
+        return sigmoid_derivative(saida);
+    }
+}
+
+CLASS RedeNeural {
+    Neuronio camada_oculta[3];
+    Neuronio neuronio_saida;
+    FLOAT taxa_aprendizado;
+
+    VOID __init__() {
+        SEQ {
+            taxa_aprendizado = 0.2;
+            INT i;
+            for i = 0; i < 3; i = i + 1 {
+                camada_oculta[i] = NEW Neuronio();
+                camada_oculta[i].__init__(2);  # 2 entradas
+            }
+            neuronio_saida = NEW Neuronio();
+            neuronio_saida.__init__(3);  # 3 entradas da camada oculta
+        }
+    }
+
+    VOID feedforward(FLOAT entradas[2], FLOAT saidas_ocultas[3], FLOAT &saida_final) {
+        INT i;
+        for i = 0; i < 3; i = i + 1 {
+            saidas_ocultas[i] = camada_oculta[i].feedforward(entradas, 2);
+        }
+        saida_final = neuronio_saida.feedforward(saidas_ocultas, 3);
+    }
+
+    VOID backpropagation(FLOAT entradas[2], FLOAT saida_desejada, FLOAT saidas_ocultas[3], FLOAT saida_final) {
+        FLOAT erro;
+        FLOAT delta_saida;
+        erro = saida_desejada - saida_final;
+        delta_saida = erro * neuronio_saida.calcular_derivada();
+
+        # Atualiza pesos camada saída
+        INT i, j;
+        for i = 0; i < 3; i = i + 1 {
+            neuronio_saida.pesos[i] = neuronio_saida.pesos[i] + saidas_ocultas[i] * delta_saida * taxa_aprendizado;
+        }
+        neuronio_saida.bias = neuronio_saida.bias + delta_saida * taxa_aprendizado;
+
+        # Atualiza pesos camada oculta
+        for i = 0; i < 3; i = i + 1 {
+            FLOAT delta_oculto;
+            delta_oculto = delta_saida * neuronio_saida.pesos[i] * camada_oculta[i].calcular_derivada();
+            for j = 0; j < 2; j = j + 1 {
+                camada_oculta[i].pesos[j] = camada_oculta[i].pesos[j] + entradas[j] * delta_oculto * taxa_aprendizado;
+            }
+            camada_oculta[i].bias = camada_oculta[i].bias + delta_oculto * taxa_aprendizado;
+        }
+    }
+
+    VOID treinar(FLOAT entradas[4][2], FLOAT saidas_desejadas[4], INT epocas) {
+        INT e, i;
+        FLOAT saidas_ocultas[3];
+        FLOAT saida_final;
+        for e = 0; e < epocas; e = e + 1 {
+            for i = 0; i < 4; i = i + 1 {
+                feedforward(entradas[i], saidas_ocultas, saida_final);
+                backpropagation(entradas[i], saidas_desejadas[i], saidas_ocultas, saida_final);
+            }
+        }
+    }
+
+    VOID testar(FLOAT entradas[4][2]) {
+        INT i;
+        FLOAT saidas_ocultas[3];
+        FLOAT saida_final;
+        for i = 0; i < 4; i = i + 1 {
+            feedforward(entradas[i], saidas_ocultas, saida_final);
+            PRINT("Input: [" + entradas[i][0] + ", " + entradas[i][1] + "] Predicted Output: " + saida_final);
+        }
+    }
+}
+
+# ----------------- Execução -----------------
+SEQ {
+    RedeNeural rede;
+    rede = NEW RedeNeural();
+    rede.__init__();
+
+    FLOAT entradas[4][2];
+    entradas[0][0] = 0; entradas[0][1] = 0;
+    entradas[1][0] = 0; entradas[1][1] = 1;
+    entradas[2][0] = 1; entradas[2][1] = 0;
+    entradas[3][0] = 1; entradas[3][1] = 1;
+
+    FLOAT saidas_desejadas[4];
+    saidas_desejadas[0] = 0;
+    saidas_desejadas[1] = 1;
+    saidas_desejadas[2] = 1;
+    saidas_desejadas[3] = 0;
+
+    rede.treinar(entradas, saidas_desejadas, 20000);
+    rede.testar(entradas);
+}

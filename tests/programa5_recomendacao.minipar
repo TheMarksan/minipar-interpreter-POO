@@ -1,218 +1,62 @@
-# ----------------- Funções auxiliares -----------------
-FLOAT relu(FLOAT x) {
-    if (x > 0) {
-        return x;
-    } ELSE {
+class Produto {
+    STRING nome;
+    INT categoria;
+
+    VOID setDados(STRING n, INT cat) {
+        this.nome = n;
+        this.categoria = cat;
+    }
+}
+
+class Usuario {
+    INT produtos_comprados[10];
+    INT n_comprados;
+
+    VOID inicializar() {
+        this.n_comprados = 0;
+    }
+
+    VOID adicionar_compra(INT produto_id) {
+        this.produtos_comprados[this.n_comprados] = produto_id;
+        this.n_comprados = this.n_comprados + 1;
+    }
+
+    INT verificar_comprou(INT produto_id) {
+        INT i;
+        for i = 0; i < this.n_comprados; i = i + 1 {
+            if this.produtos_comprados[i] == produto_id {
+                return 1;
+            }
+        }
         return 0;
     }
 }
 
-FLOAT sigmoid(FLOAT x) {
-    return 1 / (1 + 2.71828 ^ (-x));  # e ≈ 2.71828
-}
-
-# ----------------- Classes -----------------
-CLASS Produto {
-    STRING nome;
-
-    VOID __init__(STRING n) {
-        SEQ { nome = n; }
-    }
-}
-
-CLASS Categoria {
-    STRING nome;
-    Produto produtos[10];
-    INT n_produtos;
-
-    VOID __init__(STRING n, STRING nomes_produtos[10], INT tamanho) {
-        SEQ {
-            nome = n;
-            n_produtos = tamanho;
-            INT i;
-            for i = 0; i < tamanho; i = i + 1 {
-                produtos[i] = NEW Produto();
-                produtos[i].__init__(nomes_produtos[i]);
+class Recomendador {
+    VOID recomendar(Usuario user) {
+        INT i;
+        INT ja_comprou;
+        
+        print("Recomendacoes para voce:");
+        
+        for i = 0; i < 5; i = i + 1 {
+            ja_comprou = user.verificar_comprou(i);
+            if ja_comprou == 0 {
+                print("Produto ID:");
+                print(i);
             }
         }
     }
 }
 
-CLASS Usuario {
-    STRING historico[20];
-    INT n_historico;
-
-    VOID __init__(STRING compras[20], INT tamanho) {
-        SEQ {
-            n_historico = tamanho;
-            INT i;
-            for i = 0; i < tamanho; i = i + 1 {
-                historico[i] = compras[i];
-            }
-        }
-    }
-
-    INT[] codificar_historico(STRING todos_produtos[20], INT n_produtos) {
-        INT codificacao[20];
-        INT i, j;
-        for i = 0; i < n_produtos; i = i + 1 {
-            codificacao[i] = 0;
-            for j = 0; j < n_historico; j = j + 1 {
-                if (todos_produtos[i] == historico[j]) {
-                    codificacao[i] = 1;
-                }
-            }
-        }
-        return codificacao;
-    }
-}
-
-CLASS RedeNeural {
-    FLOAT W1[20][10];  # input_size x hidden_size
-    FLOAT b1[10];
-    FLOAT W2[10][20];  # hidden_size x output_size
-    FLOAT b2[20];
-    INT input_size;
-    INT hidden_size;
-    INT output_size;
-
-    VOID __init__(INT in_size, INT hid_size, INT out_size) {
-        SEQ {
-            input_size = in_size;
-            hidden_size = hid_size;
-            output_size = out_size;
-            INT i, j;
-
-            for i = 0; i < input_size; i = i + 1 {
-                for j = 0; j < hidden_size; j = j + 1 { W1[i][j] = 0.5; }
-            }
-
-            for i = 0; i < hidden_size; i = i + 1 { b1[i] = 0.5; }
-
-            for i = 0; i < hidden_size; i = i + 1 {
-                for j = 0; j < output_size; j = j + 1 { W2[i][j] = 0.5; }
-            }
-
-            for i = 0; i < output_size; i = i + 1 { b2[i] = 0.5; }
-        }
-    }
-
-    FLOAT[] forward(INT X[20]) {
-        FLOAT Z1[10];
-        FLOAT A1[10];
-        FLOAT Z2[20];
-        FLOAT A2[20];
-        INT i, j;
-
-        # Camada oculta
-        for i = 0; i < hidden_size; i = i + 1 {
-            Z1[i] = 0;
-            for j = 0; j < input_size; j = j + 1 { Z1[i] = Z1[i] + X[j] * W1[j][i]; }
-            Z1[i] = Z1[i] + b1[i];
-            A1[i] = relu(Z1[i]);
-        }
-
-        # Camada de saída
-        for i = 0; i < output_size; i = i + 1 {
-            Z2[i] = 0;
-            for j = 0; j < hidden_size; j = j + 1 { Z2[i] = Z2[i] + A1[j] * W2[j][i]; }
-            Z2[i] = Z2[i] + b2[i];
-            A2[i] = sigmoid(Z2[i]);
-        }
-
-        return A2;
-    }
-}
-
-CLASS Recomendador {
-    Usuario usuario;
-    Categoria categorias[10];
-    INT n_categorias;
-    STRING todos_produtos[20];
-    INT n_produtos;
-
-    VOID __init__(Usuario u, Categoria cats[10], INT n_cats) {
-        SEQ {
-            usuario = u;
-            n_categorias = n_cats;
-            INT idx, i, j;
-            idx = 0;
-            for i = 0; i < n_cats; i = i + 1 {
-                categorias[i] = cats[i];
-                for j = 0; j < categorias[i].n_produtos; j = j + 1 {
-                    todos_produtos[idx] = categorias[i].produtos[j].nome;
-                    idx = idx + 1;
-                }
-            }
-            n_produtos = idx;
-        }
-    }
-
-    STRING[] recomendar() {
-        SEQ {
-            INT entrada_codificada[20];
-            entrada_codificada = usuario.codificar_historico(todos_produtos, n_produtos);
-
-            RedeNeural rede;
-            rede = NEW RedeNeural();
-            rede.__init__(n_produtos, 10, n_produtos);
-
-            FLOAT saida[20];
-            saida = rede.forward(entrada_codificada);
-
-            STRING recomendacoes[20];
-            INT count;
-            count = 0;
-            INT i;
-            for i = 0; i < n_produtos; i = i + 1 {
-                if (saida[i] > 0.5) {
-                    # Evitar produtos já comprados
-                    INT ja_comprou;
-                    ja_comprou = 0;
-                    INT j;
-                    for j = 0; j < usuario.n_historico; j = j + 1 {
-                        if (usuario.historico[j] == todos_produtos[i]) { ja_comprou = 1; }
-                    }
-                    if (ja_comprou == 0) {
-                        recomendacoes[count] = todos_produtos[i];
-                        count = count + 1;
-                    }
-                }
-            }
-
-            return recomendacoes;
-        }
-    }
-}
-
-# ----------------- Execução -----------------
 SEQ {
-    # Categorias e produtos
-    STRING prod1[4] = {"Smartphone","Laptop","Tablet","Fones de ouvido"};
-    STRING prod2[4] = {"Camisa","Jeans","Jaqueta","Sapatos"};
-    STRING prod3[4] = {"Geladeira","Micro-ondas","Máquina de lavar","Ar condicionado"};
-    STRING prod4[4] = {"Ficção","Não-ficção","Ficção científica","Fantasia"};
-
-    Categoria cats[4];
-    cats[0] = NEW Categoria(); cats[0].__init__("Eletrônicos", prod1, 4);
-    cats[1] = NEW Categoria(); cats[1].__init__("Roupas", prod2, 4);
-    cats[2] = NEW Categoria(); cats[2].__init__("Eletrodomésticos", prod3, 4);
-    cats[3] = NEW Categoria(); cats[3].__init__("Livros", prod4, 4);
-
-    STRING compras_usuario[4] = {"Smartphone","Jeans","Micro-ondas","Ficção"};
     Usuario user;
-    user = NEW Usuario(); user.__init__(compras_usuario, 4);
-
-    Recomendador recomendador;
-    recomendador = NEW Recomendador();
-    recomendador.__init__(user, cats, 4);
-
-    STRING resultados[20];
-    resultados = recomendador.recomendar();
-
-    PRINT("Produtos recomendados para você:");
-    INT i;
-    for i = 0; i < 20; i = i + 1 {
-        if (resultados[i] != "") { PRINT(resultados[i]); }
-    }
+    user = new Usuario();
+    user.inicializar();
+    user.adicionar_compra(0);
+    user.adicionar_compra(2);
+    
+    Recomendador rec;
+    rec = new Recomendador();
+    rec.recomendar(user);
 }

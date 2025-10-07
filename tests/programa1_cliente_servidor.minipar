@@ -1,85 +1,29 @@
-# ----------------- Declaração do canal -----------------
-C_CHANNEL calculadora;
+C_CHANNEL canal;
 
-# ----------------- Funções auxiliares -----------------
-INT input_int(STRING mensagem) {
-    PRINT(mensagem);
-    INT valor;
-    valor = 5;  # valor fixo para simulação; substituir por input real se disponível
-    return valor;
-}
-
-STRING input_operacao(STRING mensagem) {
-    PRINT(mensagem);
-    STRING op;
-    op = "+";  # valor fixo para simulação; substituir por input real se disponível
-    return op;
-}
-
-INT executar_operacao(STRING operacao, INT v1, INT v2) {
-    INT resultado;
-    IF operacao == "+" {
-        resultado = v1 + v2;
-    } ELSE IF operacao == "-" {
-        resultado = v1 - v2;
-    } ELSE IF operacao == "*" {
-        resultado = v1 * v2;
-    } ELSE IF operacao == "/" {
-        IF v2 != 0 {
-            resultado = v1 / v2;
-        } ELSE {
-            PRINT("Erro: Divisão por zero");
-            resultado = 0;
-        }
-    } ELSE {
-        PRINT("Operação inválida");
-        resultado = 0;
+VOID produtor() {
+    INT i;
+    for i = 1; i <= 3; i = i + 1 {
+        print("Produtor enviando:");
+        print(i);
+        canal.send(i);
     }
-    RETURN resultado;
 }
 
-# ----------------- Programa Cliente -----------------
-VOID cliente() {
-    STRING operacao;
-    INT valor1, valor2, resultado;
-
-    PRINT("==== Calculadora Cliente ====");
-    PRINT("Operações disponíveis: +, -, *, /");
-
-    operacao = input_operacao("Digite a operação desejada:");
-    valor1 = input_int("Digite o primeiro valor:");
-    valor2 = input_int("Digite o segundo valor:");
-
-    # Envia os dados para o servidor
-    calculadora.SEND(operacao, valor1, valor2);
-
-    # Recebe o resultado do servidor
-    calculadora.RECEIVE(resultado);
-
-    PRINT("Resultado recebido do servidor: " + resultado);
+VOID consumidor() {
+    INT valor;
+    INT i;
+    for i = 1; i <= 3; i = i + 1 {
+        canal.receive(valor);
+        print("Consumidor recebeu:");
+        print(valor);
+    }
 }
 
-# ----------------- Programa Servidor -----------------
-VOID servidor() {
-    STRING operacao;
-    INT valor1, valor2, resultado;
-
-    # Recebe dados do cliente
-    calculadora.RECEIVE(operacao, valor1, valor2);
-
-    # Executa a operação
-    resultado = executar_operacao(operacao, valor1, valor2);
-
-    # Retorna o resultado ao cliente
-    calculadora.SEND(resultado);
-
-    PRINT("Servidor processou a operação: " + operacao + 
-          " com valores " + valor1 + ", " + valor2);
+PAR {
+    produtor();
+    consumidor();
 }
 
-# ----------------- Execução PAR Cliente/Servidor -----------------
-PAR
-    cliente();
-    servidor();
-SEQ
-    PRINT("Execução cliente-servidor finalizada.");
+SEQ {
+    print("Execucao cliente-servidor finalizada");
+}

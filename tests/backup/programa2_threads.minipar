@@ -1,0 +1,66 @@
+# ----------------- Declaração do canal -----------------
+C_CHANNEL canal_resultados;
+
+# ----------------- Funções auxiliares -----------------
+INT input_int(STRING mensagem) {
+    PRINT(mensagem);
+    INT valor;
+    valor = 5;  # valor fixo para simulação; pode ser substituído por input()
+    return valor;
+}
+
+INT calcular_fatorial(INT n) {
+    INT fatorial;
+    fatorial = 1;
+    FOR i = 1; i <= n; i = i + 1 {
+        fatorial = fatorial * i;
+    }
+    return fatorial;
+}
+
+# ----------------- Threads -----------------
+
+VOID thread_fatorial() {
+    INT n;
+    n = input_int("Digite um número para calcular o fatorial:");
+    INT fatorial;
+    fatorial = calcular_fatorial(n);
+    
+    # Envia resultado para o canal
+    canal_resultados.SEND(fatorial);
+    
+    PRINT("Thread Fatorial finalizada.");
+}
+
+VOID thread_fibonacci() {
+    INT n;
+    n = input_int("Digite a quantidade de termos da Série de Fibonacci:");
+    INT a, b, temp, i;
+    a = 0;
+    b = 1;
+
+    # Calcula série e envia cada termo para o canal
+    FOR i = 0; i < n; i = i + 1 {
+        canal_resultados.SEND(a);
+        temp = a + b;
+        a = b;
+        b = temp;
+    }
+    PRINT("Thread Fibonacci finalizada.");
+}
+
+# ----------------- Execução PAR -----------------
+
+PAR
+    thread_fatorial();
+    thread_fibonacci();
+SEQ
+    # Recebe resultados do canal (simulação de leitura)
+    INT recebido;
+    # Vamos supor que sabemos quantos valores receber (n + 1: fatorial + n termos Fibonacci)
+    FOR i = 0; i < 6; i = i + 1 {  # exemplo: n=5
+        canal_resultados.RECEIVE(recebido);
+        PRINT("Valor recebido do canal: " + recebido);
+    }
+
+    PRINT("Execução paralela finalizada.");

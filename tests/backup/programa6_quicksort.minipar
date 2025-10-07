@@ -1,0 +1,132 @@
+# ----------------- Classes -----------------
+
+CLASS Quicksort {
+    INT array[100];  # Suporta até 100 elementos
+    INT n;
+
+    VOID __init__() {
+        SEQ {
+            # Inicializa array e tamanho
+            n = 0;
+        }
+    }
+
+    VOID setArray(INT arr[100], INT tamanho) {
+        SEQ {
+            n = tamanho;
+            INT i;
+            for i = 0; i < n; i = i + 1 {
+                array[i] = arr[i];
+            }
+        }
+    }
+
+    INT[] ordenar() {
+        SEQ {
+            return this._quicksort(array, n);
+        }
+    }
+
+    INT[] _quicksort(INT arr[100], INT tamanho) {
+        SEQ {
+            if (tamanho <= 1) {
+                return arr;
+            } ELSE {
+                # pivot = arr[0]
+                INT pivot;
+                pivot = arr[0];
+
+                INT menores[100];
+                INT maiores[100];
+                INT count_menores;
+                INT count_maiores;
+                count_menores = 0;
+                count_maiores = 0;
+
+                INT i;
+                for i = 1; i < tamanho; i = i + 1 {
+                    if (arr[i] <= pivot) {
+                        menores[count_menores] = arr[i];
+                        count_menores = count_menores + 1;
+                    } ELSE {
+                        maiores[count_maiores] = arr[i];
+                        count_maiores = count_maiores + 1;
+                    }
+                }
+
+                INT sorted_menores[100];
+                INT sorted_maiores[100];
+                sorted_menores = this._quicksort(menores, count_menores);
+                sorted_maiores = this._quicksort(maiores, count_maiores);
+
+                # Combinar sorted_menores + pivot + sorted_maiores
+                INT resultado[100];
+                INT idx;
+                idx = 0;
+                for i = 0; i < count_menores; i = i + 1 {
+                    resultado[idx] = sorted_menores[i];
+                    idx = idx + 1;
+                }
+                resultado[idx] = pivot;
+                idx = idx + 1;
+                for i = 0; i < count_maiores; i = i + 1 {
+                    resultado[idx] = sorted_maiores[i];
+                    idx = idx + 1;
+                }
+
+                return resultado;
+            }
+        }
+    }
+}
+
+CLASS InterfaceOrdenacao {
+    VOID iniciar() {
+        SEQ {
+            PRINT("==== Ordenação com Quicksort ====");
+            PRINT("Insira os elementos do vetor separados por espaço:");
+
+            STRING entrada;
+            entrada = INPUT();
+
+            INT arr[100];
+            INT n;
+            n = 0;
+
+            # Converter entrada em inteiros
+            STRING partes[100];
+            partes = SPLIT(entrada, " ");  # SPLIT é função runtime
+            INT i;
+            for i = 0; i < LEN(partes); i = i + 1 {
+                arr[i] = TO_INT(partes[i]);
+                n = n + 1;
+            }
+
+            PRINT("Vetor original:");
+            for i = 0; i < n; i = i + 1 {
+                PRINT(arr[i]);
+            }
+
+            # Criar Quicksort e ordenar
+            Quicksort qs;
+            qs = NEW Quicksort();
+            qs.__init__();
+            qs.setArray(arr, n);
+            INT sorted[100];
+            sorted = qs.ordenar();
+
+            PRINT("Vetor ordenado:");
+            for i = 0; i < n; i = i + 1 {
+                PRINT(sorted[i]);
+            }
+        }
+    }
+}
+
+# ----------------- Execução -----------------
+SEQ {
+    InterfaceOrdenacao interface;
+    interface = NEW InterfaceOrdenacao();
+    interface.__init__();
+    interface.iniciar();
+}
