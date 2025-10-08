@@ -1,7 +1,3 @@
-import sys
-import os
-sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
-
 from lexer.token_type import TokenType
 from parser.AST import *
 
@@ -107,6 +103,17 @@ class Parser:
                         while True:
                             param_type = self.advance().lexeme
                             param_name = self.expect(TokenType.IDENT).lexeme
+                            
+                            # Verificar se o parâmetro é array
+                            if self.match(TokenType.LBRACKET):
+                                self.advance()
+                                if not self.match(TokenType.RBRACKET):
+                                    # Tem tamanho especificado (como [16])
+                                    array_size_expr = self.parse_expression()
+                                self.expect(TokenType.RBRACKET)
+                                # Para parâmetros de array, adicionar [] ao tipo
+                                param_type = param_type + "[]"
+                            
                             parameters.append((param_type, param_name))
                             if not self.match(TokenType.COMMA):
                                 break
@@ -116,6 +123,29 @@ class Parser:
                     body = self.parse_statements_list()
                     self.expect(TokenType.RBRACE)
                     methods.append(MethodNode(return_type, name_token.lexeme, parameters, body))
+                elif self.match(TokenType.LBRACKET):
+                    self.advance()
+                    array_size = None
+                    if not self.match(TokenType.RBRACKET):
+                        array_size = self.parse_expression()
+                    self.expect(TokenType.RBRACKET)
+                    
+                    # Check for second dimension (2D array)
+                    is_2d = False
+                    array_size2 = None
+                    if self.match(TokenType.LBRACKET):
+                        is_2d = True
+                        self.advance()
+                        if not self.match(TokenType.RBRACKET):
+                            array_size2 = self.parse_expression()
+                        self.expect(TokenType.RBRACKET)
+                    
+                    if is_2d:
+                        attributes.append(AttributeNode(return_type, name_token.lexeme, is_array=False, array_size=None, is_2d_array=True, array_dimensions=[array_size, array_size2]))
+                    else:
+                        attributes.append(AttributeNode(return_type, name_token.lexeme, is_array=True, array_size=array_size))
+                    if self.match(TokenType.SEMICOLON):
+                        self.advance()
                 else:
                     attributes.append(AttributeNode(return_type, name_token.lexeme))
                     if self.match(TokenType.SEMICOLON):
@@ -135,6 +165,17 @@ class Parser:
             while True:
                 param_type = self.advance().lexeme
                 param_name = self.expect(TokenType.IDENT).lexeme
+                
+                # Verificar se o parâmetro é array
+                if self.match(TokenType.LBRACKET):
+                    self.advance()
+                    if not self.match(TokenType.RBRACKET):
+                        # Tem tamanho especificado (como [16])
+                        array_size_expr = self.parse_expression()
+                    self.expect(TokenType.RBRACKET)
+                    # Para parâmetros de array, adicionar [] ao tipo
+                    param_type = param_type + "[]"
+                
                 parameters.append((param_type, param_name))
                 if not self.match(TokenType.COMMA):
                     break
@@ -280,7 +321,54 @@ class Parser:
             if self.match(TokenType.DOT):
                 self.expect(TokenType.DOT)
                 attr_name = self.expect(TokenType.IDENT).lexeme
-                if self.match(TokenType.ASSIGN):
+                
+                # Verificar se é acesso a array (this.attr[index])
+                if self.match(TokenType.LBRACKET):
+                    self.advance()
+                    index = self.parse_expression()
+                    self.expect(TokenType.RBRACKET)
+                    
+                    # Verificar se há segunda dimensão
+                    index2 = None
+                    if self.match(TokenType.LBRACKET):
+                        self.advance()
+                        index2 = self.parse_expression()
+                        self.expect(TokenType.RBRACKET)
+                    
+                    # Verificar se é acesso a método/atributo de objeto no array
+                    if self.match(TokenType.DOT):
+                        self.expect(TokenType.DOT)
+                        member_name = self.expect(TokenType.IDENT).lexeme
+                        
+                        if self.match(TokenType.LPAREN):
+                            # Chamada de método: this.produtos[i].metodo()
+                            self.advance()
+                            args = self.parse_arguments()
+                            self.expect(TokenType.RPAREN)
+                            if self.match(TokenType.SEMICOLON):
+                                self.advance()
+                            # Criar AttributeAccessNode para this.produtos, depois ArrayAccessNode, depois método
+                            attr_access = AttributeAccessNode(obj_name, attr_name)
+                            array_access = ArrayAccessWithObjectNode(attr_access, index, index2)
+                            return ArrayElementMethodCallNode(array_access, member_name, args)
+                        elif self.match(TokenType.ASSIGN):
+                            # Atribuição: this.produtos[i].nome = valor
+                            self.advance()
+                            expression = self.parse_expression()
+                            if self.match(TokenType.SEMICOLON):
+                                self.advance()
+                            attr_access = AttributeAccessNode(obj_name, attr_name)
+                            array_access = ArrayAccessWithObjectNode(attr_access, index, index2)
+                            return ArrayElementAttributeAssignmentNode(array_access, member_name, expression)
+                    elif self.match(TokenType.ASSIGN):
+                        # Atribuição simples a elemento do array: this.produtos[i] = valor
+                        self.advance()
+                        expression = self.parse_expression()
+                        if self.match(TokenType.SEMICOLON):
+                            self.advance()
+                        # Criar node especial para atribuição de array em atributo de objeto
+                        return ObjectAttributeArrayAssignmentNode(obj_name, attr_name, index, expression, index2)
+                elif self.match(TokenType.ASSIGN):
                     self.advance()
                     expression = self.parse_expression()
                     if self.match(TokenType.SEMICOLON):
@@ -348,7 +436,34 @@ class Parser:
                     index2 = self.parse_expression()
                     self.expect(TokenType.RBRACKET)
                 
-                if self.match(TokenType.ASSIGN):
+                # Verificar se é acesso a método/atributo de objeto no array
+                if self.match(TokenType.DOT):
+                    self.expect(TokenType.DOT)
+                    member_name = self.expect(TokenType.IDENT).lexeme
+                    
+                    if self.match(TokenType.LPAREN):
+                        # Chamada de método em elemento do array
+                        self.advance()
+                        args = self.parse_arguments()
+                        self.expect(TokenType.RPAREN)
+                        if self.match(TokenType.SEMICOLON):
+                            self.advance()
+                        # Criar node especial para método em array
+                        array_access = ArrayAccessNode(array_name, index, index2)
+                        return ArrayElementMethodCallNode(array_access, member_name, args)
+                    elif self.match(TokenType.ASSIGN):
+                        # Atribuição a atributo de elemento do array
+                        self.advance()
+                        expression = self.parse_expression()
+                        if self.match(TokenType.SEMICOLON):
+                            self.advance()
+                        array_access = ArrayAccessNode(array_name, index, index2)
+                        return ArrayElementAttributeAssignmentNode(array_access, member_name, expression)
+                    else:
+                        # Acesso a atributo de elemento do array
+                        array_access = ArrayAccessNode(array_name, index, index2)
+                        return ArrayElementAttributeAccessNode(array_access, member_name)
+                elif self.match(TokenType.ASSIGN):
                     self.advance()
                     
                     if self.match(TokenType.INPUT):
@@ -568,6 +683,12 @@ class Parser:
         elif self.match(TokenType.TEXT):
             value = self.advance().lexeme
             return StringNode(value)
+        elif self.match(TokenType.NEW):
+            self.advance()
+            class_name = self.expect(TokenType.IDENT).lexeme
+            self.expect(TokenType.LPAREN)
+            self.expect(TokenType.RPAREN)
+            return NewExpressionNode(class_name)
         elif self.match(TokenType.THIS):
             name = self.advance().lexeme
             if self.match(TokenType.DOT):
@@ -578,6 +699,40 @@ class Parser:
                     args = self.parse_arguments()
                     self.expect(TokenType.RPAREN)
                     return MethodCallNode(name, attr_or_method, args)
+                elif self.match(TokenType.LBRACKET):
+                    # this.attribute[index] - atributo é array
+                    self.advance()
+                    index = self.parse_expression()
+                    self.expect(TokenType.RBRACKET)
+                    
+                    # Verificar se há segunda dimensão
+                    index2 = None
+                    if self.match(TokenType.LBRACKET):
+                        self.advance()
+                        index2 = self.parse_expression()
+                        self.expect(TokenType.RBRACKET)
+                    
+                    # Verificar se é acesso a atributo/método de objeto no array
+                    if self.match(TokenType.DOT):
+                        self.advance()
+                        member_name = self.expect(TokenType.IDENT).lexeme
+                        if self.match(TokenType.LPAREN):
+                            # this.array[i].metodo()
+                            self.advance()
+                            args = self.parse_arguments()
+                            self.expect(TokenType.RPAREN)
+                            attr_access = AttributeAccessNode(name, attr_or_method)
+                            array_access = ArrayAccessWithObjectNode(attr_access, index, index2)
+                            return ArrayElementMethodCallNode(array_access, member_name, args)
+                        else:
+                            # this.array[i].attribute
+                            attr_access = AttributeAccessNode(name, attr_or_method)
+                            array_access = ArrayAccessWithObjectNode(attr_access, index, index2)
+                            return ArrayElementAttributeAccessNode(array_access, member_name)
+                    else:
+                        # this.array[i]
+                        attr_access = AttributeAccessNode(name, attr_or_method)
+                        return ArrayAccessWithObjectNode(attr_access, index, index2)
                 else:
                     return AttributeAccessNode(name, attr_or_method)
             return IdentifierNode(name)
@@ -600,6 +755,22 @@ class Parser:
                     index2 = self.parse_expression()
                     self.expect(TokenType.RBRACKET)
                 
+                # Verificar se é acesso a atributo/método de objeto no array
+                if self.match(TokenType.DOT):
+                    self.advance()
+                    attr_or_method = self.expect(TokenType.IDENT).lexeme
+                    if self.match(TokenType.LPAREN):
+                        # Chamada de método em elemento do array
+                        self.advance()
+                        args = self.parse_arguments()
+                        self.expect(TokenType.RPAREN)
+                        array_access = ArrayAccessNode(name, index, index2)
+                        return ArrayElementMethodCallNode(array_access, attr_or_method, args)
+                    else:
+                        # Acesso a atributo de elemento do array
+                        array_access = ArrayAccessNode(name, index, index2)
+                        return ArrayElementAttributeAccessNode(array_access, attr_or_method)
+                
                 return ArrayAccessNode(name, index, index2)
             elif self.match(TokenType.DOT):
                 self.advance()
@@ -609,6 +780,40 @@ class Parser:
                     args = self.parse_arguments()
                     self.expect(TokenType.RPAREN)
                     return MethodCallNode(name, attr_or_method, args)
+                elif self.match(TokenType.LBRACKET):
+                    # object.attribute[index] - atributo é array
+                    self.advance()
+                    index = self.parse_expression()
+                    self.expect(TokenType.RBRACKET)
+                    
+                    # Verificar se há segunda dimensão
+                    index2 = None
+                    if self.match(TokenType.LBRACKET):
+                        self.advance()
+                        index2 = self.parse_expression()
+                        self.expect(TokenType.RBRACKET)
+                    
+                    # Verificar se é acesso a atributo/método de objeto no array
+                    if self.match(TokenType.DOT):
+                        self.advance()
+                        member_name = self.expect(TokenType.IDENT).lexeme
+                        if self.match(TokenType.LPAREN):
+                            # object.array[i].metodo()
+                            self.advance()
+                            args = self.parse_arguments()
+                            self.expect(TokenType.RPAREN)
+                            attr_access = AttributeAccessNode(name, attr_or_method)
+                            array_access = ArrayAccessWithObjectNode(attr_access, index, index2)
+                            return ArrayElementMethodCallNode(array_access, member_name, args)
+                        else:
+                            # object.array[i].attribute
+                            attr_access = AttributeAccessNode(name, attr_or_method)
+                            array_access = ArrayAccessWithObjectNode(attr_access, index, index2)
+                            return ArrayElementAttributeAccessNode(array_access, member_name)
+                    else:
+                        # object.array[i]
+                        attr_access = AttributeAccessNode(name, attr_or_method)
+                        return ArrayAccessWithObjectNode(attr_access, index, index2)
                 else:
                     return AttributeAccessNode(name, attr_or_method)
             return IdentifierNode(name)

@@ -1,62 +1,282 @@
+FLOAT relu(FLOAT x) {
+    if x > 0 {
+        return x;
+    }
+    return 0;
+}
+
+FLOAT sigmoid_aprox(FLOAT x) {
+    if x > 2 {
+        return 0.88;
+    }
+    if x > 1 {
+        return 0.73;
+    }
+    if x > 0 {
+        return 0.62;
+    }
+    if x > -1 {
+        return 0.38;
+    }
+    if x > -2 {
+        return 0.27;
+    }
+    return 0.12;
+}
+
 class Produto {
     STRING nome;
-    INT categoria;
 
-    VOID setDados(STRING n, INT cat) {
+    VOID setNome(STRING n) {
         this.nome = n;
-        this.categoria = cat;
+    }
+}
+
+class Categoria {
+    STRING nome;
+    Produto produtos[4];
+    INT n_produtos;
+
+    VOID inicializar(STRING n) {
+        this.nome = n;
+        this.n_produtos = 0;
+    }
+
+    VOID adicionarProduto(STRING nome_prod) {
+        this.produtos[this.n_produtos] = new Produto();
+        this.produtos[this.n_produtos].setNome(nome_prod);
+        this.n_produtos = this.n_produtos + 1;
     }
 }
 
 class Usuario {
-    INT produtos_comprados[10];
-    INT n_comprados;
+    STRING historico[4];
+    INT n_historico;
 
     VOID inicializar() {
-        this.n_comprados = 0;
+        this.n_historico = 0;
     }
 
-    VOID adicionar_compra(INT produto_id) {
-        this.produtos_comprados[this.n_comprados] = produto_id;
-        this.n_comprados = this.n_comprados + 1;
+    VOID adicionarCompra(STRING produto) {
+        this.historico[this.n_historico] = produto;
+        this.n_historico = this.n_historico + 1;
     }
 
-    INT verificar_comprou(INT produto_id) {
+    VOID codificar_historico(STRING todos_produtos[16], INT n_produtos, INT resultado[16]) {
         INT i;
-        for i = 0; i < this.n_comprados; i = i + 1 {
-            if this.produtos_comprados[i] == produto_id {
-                return 1;
+        INT j;
+        INT encontrou;
+        
+        for i = 0; i < n_produtos; i = i + 1 {
+            encontrou = 0;
+            for j = 0; j < this.n_historico; j = j + 1 {
+                if todos_produtos[i] == this.historico[j] {
+                    encontrou = 1;
+                }
+            }
+            resultado[i] = encontrou;
+        }
+    }
+}
+
+class RedeNeural {
+    FLOAT W1[16][10];
+    FLOAT b1[10];
+    FLOAT W2[10][16];
+    FLOAT b2[16];
+    INT input_size;
+    INT hidden_size;
+    INT output_size;
+
+    VOID inicializar(INT in_size, INT hid_size, INT out_size) {
+        INT i;
+        INT j;
+        
+        this.input_size = in_size;
+        this.hidden_size = hid_size;
+        this.output_size = out_size;
+
+        for i = 0; i < in_size; i = i + 1 {
+            for j = 0; j < hid_size; j = j + 1 {
+                this.W1[i][j] = 0.5;
             }
         }
-        return 0;
+
+        for i = 0; i < hid_size; i = i + 1 {
+            this.b1[i] = 0.5;
+        }
+
+        for i = 0; i < hid_size; i = i + 1 {
+            for j = 0; j < out_size; j = j + 1 {
+                this.W2[i][j] = 0.5;
+            }
+        }
+
+        for i = 0; i < out_size; i = i + 1 {
+            this.b2[i] = 0.5;
+        }
+    }
+
+    VOID forward(INT X[16], FLOAT saida[16]) {
+        FLOAT Z1[10];
+        FLOAT A1[10];
+        FLOAT Z2[16];
+        INT i;
+        INT j;
+
+        for i = 0; i < this.hidden_size; i = i + 1 {
+            Z1[i] = 0;
+            for j = 0; j < this.input_size; j = j + 1 {
+                Z1[i] = Z1[i] + X[j] * this.W1[j][i];
+            }
+            Z1[i] = Z1[i] + this.b1[i];
+            A1[i] = relu(Z1[i]);
+        }
+
+        for i = 0; i < this.output_size; i = i + 1 {
+            Z2[i] = 0;
+            for j = 0; j < this.hidden_size; j = j + 1 {
+                Z2[i] = Z2[i] + A1[j] * this.W2[j][i];
+            }
+            Z2[i] = Z2[i] + this.b2[i];
+            saida[i] = sigmoid_aprox(Z2[i]);
+        }
     }
 }
 
 class Recomendador {
-    VOID recomendar(Usuario user) {
+    Usuario usuario;
+    Categoria categorias[4];
+    INT n_categorias;
+    STRING todos_produtos[16];
+    INT n_produtos;
+
+    VOID inicializar(Usuario u) {
+        INT idx;
         INT i;
+        INT j;
+        
+        this.usuario = u;
+        this.n_categorias = 0;
+        idx = 0;
+        this.n_produtos = 0;
+    }
+
+    VOID adicionarCategoria(Categoria cat) {
+        INT j;
+        this.categorias[this.n_categorias] = cat;
+        
+        for j = 0; j < cat.n_produtos; j = j + 1 {
+            this.todos_produtos[this.n_produtos] = cat.produtos[j].nome;
+            this.n_produtos = this.n_produtos + 1;
+        }
+        
+        this.n_categorias = this.n_categorias + 1;
+    }
+
+    VOID recomendar() {
+        INT entrada_codificada[16];
+        FLOAT saida[16];
+        INT i;
+        INT j;
         INT ja_comprou;
         
-        print("Recomendacoes para voce:");
+        this.usuario.codificar_historico(this.todos_produtos, this.n_produtos, entrada_codificada);
+
+        RedeNeural rede;
+        rede = new RedeNeural();
+        rede.inicializar(this.n_produtos, 10, this.n_produtos);
+
+        rede.forward(entrada_codificada, saida);
+
+        print("Produtos recomendados para voce:");
         
-        for i = 0; i < 5; i = i + 1 {
-            ja_comprou = user.verificar_comprou(i);
-            if ja_comprou == 0 {
-                print("Produto ID:");
-                print(i);
+        for i = 0; i < this.n_produtos; i = i + 1 {
+            if saida[i] > 0.5 {
+                ja_comprou = 0;
+                for j = 0; j < this.usuario.n_historico; j = j + 1 {
+                    if this.usuario.historico[j] == this.todos_produtos[i] {
+                        ja_comprou = 1;
+                    }
+                }
+                if ja_comprou == 0 {
+                    print(this.todos_produtos[i]);
+                }
             }
         }
     }
 }
 
 SEQ {
+    STRING eletronicos[4];
+    STRING roupas[4];
+    STRING eletrodomesticos[4];
+    STRING livros[4];
+    INT i;
+    
+    eletronicos[0] = "Smartphone";
+    eletronicos[1] = "Laptop";
+    eletronicos[2] = "Tablet";
+    eletronicos[3] = "Fones de ouvido";
+    
+    roupas[0] = "Camisa";
+    roupas[1] = "Jeans";
+    roupas[2] = "Jaqueta";
+    roupas[3] = "Sapatos";
+    
+    eletrodomesticos[0] = "Geladeira";
+    eletrodomesticos[1] = "Micro-ondas";
+    eletrodomesticos[2] = "Maquina de lavar";
+    eletrodomesticos[3] = "Ar condicionado";
+    
+    livros[0] = "Ficcao";
+    livros[1] = "Nao-ficcao";
+    livros[2] = "Ficcao cientifica";
+    livros[3] = "Fantasia";
+    
+    Categoria cat1;
+    cat1 = new Categoria();
+    cat1.inicializar("Eletronicos");
+    for i = 0; i < 4; i = i + 1 {
+        cat1.adicionarProduto(eletronicos[i]);
+    }
+    
+    Categoria cat2;
+    cat2 = new Categoria();
+    cat2.inicializar("Roupas");
+    for i = 0; i < 4; i = i + 1 {
+        cat2.adicionarProduto(roupas[i]);
+    }
+    
+    Categoria cat3;
+    cat3 = new Categoria();
+    cat3.inicializar("Eletrodomesticos");
+    for i = 0; i < 4; i = i + 1 {
+        cat3.adicionarProduto(eletrodomesticos[i]);
+    }
+    
+    Categoria cat4;
+    cat4 = new Categoria();
+    cat4.inicializar("Livros");
+    for i = 0; i < 4; i = i + 1 {
+        cat4.adicionarProduto(livros[i]);
+    }
+    
     Usuario user;
     user = new Usuario();
     user.inicializar();
-    user.adicionar_compra(0);
-    user.adicionar_compra(2);
+    user.adicionarCompra("Smartphone");
+    user.adicionarCompra("Jeans");
+    user.adicionarCompra("Micro-ondas");
+    user.adicionarCompra("Ficcao");
     
-    Recomendador rec;
-    rec = new Recomendador();
-    rec.recomendar(user);
+    Recomendador recomendador;
+    recomendador = new Recomendador();
+    recomendador.inicializar(user);
+    recomendador.adicionarCategoria(cat1);
+    recomendador.adicionarCategoria(cat2);
+    recomendador.adicionarCategoria(cat3);
+    recomendador.adicionarCategoria(cat4);
+    
+    recomendador.recomendar();
 }

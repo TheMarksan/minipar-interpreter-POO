@@ -21,9 +21,13 @@ class ClassNode(ASTNode):
 
 
 class AttributeNode(ASTNode):
-    def __init__(self, type_name, name):
+    def __init__(self, type_name, name, is_array=False, array_size=None, is_2d_array=False, array_dimensions=None):
         self.type_name = type_name
         self.name = name
+        self.is_array = is_array
+        self.array_size = array_size
+        self.is_2d_array = is_2d_array
+        self.array_dimensions = array_dimensions
 
 
 class MethodNode(ASTNode):
@@ -81,6 +85,47 @@ class InstantiationNode(ASTNode):
         self.type_name = type_name
         self.var_name = var_name
         self.class_name = class_name
+
+
+class NewExpressionNode(ASTNode):
+    def __init__(self, class_name):
+        self.class_name = class_name
+
+
+class ArrayElementMethodCallNode(ASTNode):
+    def __init__(self, array_access, method_name, arguments=None):
+        self.array_access = array_access
+        self.method_name = method_name
+        self.arguments = arguments if arguments else []
+
+
+class ArrayElementAttributeAssignmentNode(ASTNode):
+    def __init__(self, array_access, attribute_name, value):
+        self.array_access = array_access
+        self.attribute_name = attribute_name
+        self.value = value
+
+
+class ArrayElementAttributeAccessNode(ASTNode):
+    def __init__(self, array_access, attribute_name):
+        self.array_access = array_access
+        self.attribute_name = attribute_name
+
+
+class ArrayAccessWithObjectNode(ASTNode):
+    def __init__(self, object_attr_access, index, index2=None):
+        self.object_attr_access = object_attr_access
+        self.index = index
+        self.index2 = index2
+
+
+class ObjectAttributeArrayAssignmentNode(ASTNode):
+    def __init__(self, object_name, attr_name, index, value, index2=None):
+        self.object_name = object_name
+        self.attr_name = attr_name
+        self.index = index
+        self.value = value
+        self.index2 = index2
 
 
 class MethodCallNode(ASTNode):

@@ -1,29 +1,75 @@
-C_CHANNEL canal;
+C_CHANNEL calculadora;
 
-VOID produtor() {
-    INT i;
-    for i = 1; i <= 3; i = i + 1 {
-        print("Produtor enviando:");
-        print(i);
-        canal.send(i);
+
+INT executar_operacao(STRING operacao, INT v1, INT v2) {
+    INT resultado;
+    if operacao == "+" {
+        resultado = v1 + v2;
+    } else if operacao == "-" {
+        resultado = v1 - v2;
+    } else if operacao == "*" {
+        resultado = v1 * v2;
+    } else if operacao == "/" {
+        IF v2 != 0 {
+            resultado = v1 / v2;
+        } else {
+            PRINT("Erro: Divisão por zero");
+            resultado = 0;
+        }
+    } else {
+        PRINT("Operação inválida");
+        resultado = 0;
     }
+    return resultado;
 }
 
-VOID consumidor() {
-    INT valor;
-    INT i;
-    for i = 1; i <= 3; i = i + 1 {
-        canal.receive(valor);
-        print("Consumidor recebeu:");
-        print(valor);
-    }
+
+VOID cliente() {
+    STRING operacao;
+    INT valor1;
+    INT valor2;
+    INT resultado;
+
+    PRINT("==== Calculadora Cliente ====");
+    PRINT("Operações disponíveis: +, -, *, /");
+
+    operacao = "+";
+    valor1 = 10;
+    valor2 = 5;
+
+    PRINT("Cliente enviando: " + operacao + ", " + valor1 + ", " + valor2);
+    calculadora.SEND(operacao, valor1, valor2);
+
+    PRINT("Cliente aguardando resultado...");
+    calculadora.RECEIVE(resultado);
+
+    PRINT("Resultado recebido do servidor: " + resultado);
+}
+
+
+VOID servidor() {
+    STRING operacao;
+    INT valor1;
+    INT valor2;
+    INT resultado;
+
+    PRINT("Servidor aguardando dados...");
+    calculadora.RECEIVE(operacao, valor1, valor2);
+
+    PRINT("Servidor recebeu: " + operacao + ", " + valor1 + ", " + valor2);
+    resultado = executar_operacao(operacao, valor1, valor2);
+
+    PRINT("Servidor enviando resultado: " + resultado);
+    calculadora.SEND(resultado);
+
+    PRINT("Servidor processou a operação: " + operacao + " com valores " + valor1 + ", " + valor2);
 }
 
 PAR {
-    produtor();
-    consumidor();
+    cliente();
+    servidor();
 }
 
 SEQ {
-    print("Execucao cliente-servidor finalizada");
+    PRINT("Execução cliente-servidor finalizada.");
 }

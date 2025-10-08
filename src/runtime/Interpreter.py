@@ -23,7 +23,24 @@ class ObjectInstance:
         self.attributes = {}
         
         for attr in class_def.attributes:
-            self.attributes[attr.name] = None
+            if hasattr(attr, 'is_2d_array') and attr.is_2d_array and hasattr(attr, 'array_dimensions') and attr.array_dimensions:
+                # 2D array
+                dim1 = attr.array_dimensions[0]
+                dim2 = attr.array_dimensions[1]
+                if isinstance(dim1, NumberNode):
+                    dim1 = int(dim1.value)
+                if isinstance(dim2, NumberNode):
+                    dim2 = int(dim2.value)
+                # Create 2D array
+                self.attributes[attr.name] = [[None for _ in range(int(dim2))] for _ in range(int(dim1))]
+            elif hasattr(attr, 'is_array') and attr.is_array and hasattr(attr, 'array_size') and attr.array_size:
+                # 1D array
+                size = attr.array_size
+                if isinstance(size, NumberNode):
+                    size = int(size.value)
+                self.attributes[attr.name] = [None] * int(size)
+            else:
+                self.attributes[attr.name] = None
     
     def get_attribute(self, name):
         if name in self.attributes:
@@ -106,6 +123,8 @@ class Interpreter:
                 self.execute_block(node)
             elif isinstance(node, FunctionCallNode):
                 self.execute_function_call(node)
+            else:
+                self.execute_statement(node)
     
     def execute_block(self, node):
         if node.block_type == "seq":
@@ -193,10 +212,20 @@ class Interpreter:
             self.execute_return(node)
         elif isinstance(node, InstantiationNode):
             self.execute_instantiation(node)
+        elif isinstance(node, ArrayElementMethodCallNode):
+            self.execute_array_element_method_call(node)
+        elif isinstance(node, ArrayElementAttributeAssignmentNode):
+            self.execute_array_element_attribute_assignment(node)
+        elif isinstance(node, ArrayElementAttributeAccessNode):
+            self.evaluate_array_element_attribute_access(node)
+        elif isinstance(node, ObjectAttributeArrayAssignmentNode):
+            self.execute_object_attribute_array_assignment(node)
         elif isinstance(node, AttributeAccessNode):
             self.evaluate_attribute_access(node)
         elif isinstance(node, ArrayAccessNode):
             self.evaluate_array_access(node)
+        elif isinstance(node, ArrayAccessWithObjectNode):
+            self.evaluate_array_access_with_object(node)
     
     def execute_declaration(self, node, scope):
         value = None
@@ -522,6 +551,16 @@ class Interpreter:
             return self.execute_function_call(node)
         elif isinstance(node, MethodCallNode):
             return self.execute_method_call(node)
+        elif isinstance(node, NewExpressionNode):
+            if node.class_name in self.classes:
+                class_def = self.classes[node.class_name]
+                return ObjectInstance(node.class_name, class_def, self.classes)
+        elif isinstance(node, ArrayElementAttributeAccessNode):
+            return self.evaluate_array_element_attribute_access(node)
+        elif isinstance(node, ArrayElementMethodCallNode):
+            return self.execute_array_element_method_call(node)
+        elif isinstance(node, ArrayAccessWithObjectNode):
+            return self.evaluate_array_access_with_object(node)
         return None
     
     def evaluate_attribute_access(self, node):
@@ -594,4 +633,98 @@ class Interpreter:
             return self.local_scope[name]
         elif name in self.global_scope:
             return self.global_scope[name]
+        return None
+    
+    def execute_array_element_method_call(self, node):
+        # Obter o objeto do array
+        if isinstance(node.array_access, ArrayAccessWithObjectNode):
+            obj = self.evaluate_array_access_with_object(node.array_access)
+        else:
+            obj = self.evaluate_array_access(node.array_access)
+        
+        if isinstance(obj, ObjectInstance):
+            method = obj.get_method(node.method_name)
+            if method:
+                local_env = {'this': obj}
+                
+                for i, (param_type, param_name) in enumerate(method.parameters):
+                    if i < len(node.arguments):
+                        local_env[param_name] = self.evaluate_expression(node.arguments[i])
+                
+                old_local = self.local_scope
+                self.local_scope = local_env
+                
+                try:
+                    for stmt in method.body:
+                        self.execute_statement(stmt)
+                except ReturnException as e:
+                    self.local_scope = old_local
+                    return e.value
+                finally:
+                    self.local_scope = old_local
+                
+                return None
+        
+        return None
+    
+    def execute_array_element_attribute_assignment(self, node):
+        # Obter o objeto do array
+        if isinstance(node.array_access, ArrayAccessWithObjectNode):
+            obj = self.evaluate_array_access_with_object(node.array_access)
+        else:
+            obj = self.evaluate_array_access(node.array_access)
+        
+        if isinstance(obj, ObjectInstance):
+            value = self.evaluate_expression(node.value)
+            obj.set_attribute(node.attribute_name, value)
+    
+    def evaluate_array_element_attribute_access(self, node):
+        # Obter o objeto do array
+        if isinstance(node.array_access, ArrayAccessWithObjectNode):
+            obj = self.evaluate_array_access_with_object(node.array_access)
+        else:
+            obj = self.evaluate_array_access(node.array_access)
+        
+        if isinstance(obj, ObjectInstance):
+            return obj.get_attribute(node.attribute_name)
+        
+        return None
+    
+    def execute_object_attribute_array_assignment(self, node):
+        # this.produtos[i] = valor
+        obj = self.get_variable(node.object_name)
+        
+        if isinstance(obj, ObjectInstance):
+            array = obj.get_attribute(node.attr_name)
+            if isinstance(array, list):
+                if node.index2 is not None:
+                    # Array bidimensional
+                    index1 = self.evaluate_expression(node.index)
+                    index2 = self.evaluate_expression(node.index2)
+                    value = self.evaluate_expression(node.value)
+                    if isinstance(array[int(index1)], list):
+                        array[int(index1)][int(index2)] = value
+                else:
+                    # Array unidimensional
+                    index = self.evaluate_expression(node.index)
+                    value = self.evaluate_expression(node.value)
+                    array[int(index)] = value
+    
+    def evaluate_array_access_with_object(self, node):
+        # this.produtos[i] - primeiro pega this.produtos, depois indexa
+        if isinstance(node.object_attr_access, AttributeAccessNode):
+            array = self.evaluate_attribute_access(node.object_attr_access)
+            
+            if isinstance(array, list):
+                if node.index2 is not None:
+                    # Array bidimensional
+                    index1 = self.evaluate_expression(node.index)
+                    index2 = self.evaluate_expression(node.index2)
+                    if isinstance(array[int(index1)], list):
+                        return array[int(index1)][int(index2)]
+                else:
+                    # Array unidimensional
+                    index = self.evaluate_expression(node.index)
+                    return array[int(index)]
+        
         return None
