@@ -1,2 +1,25 @@
-SEQ
-    print("Hello World")
+void funcao1(){
+    int i;
+    i = 0;
+    while i != 5 {
+        print("THREAD A: " + i);
+        i = i + 1;
+    }
+}
+
+void funcao2(){
+    int j;
+    j = 5;
+    while j != 0 {
+        print("THREAD B: " + j);
+        j = j - 1;
+    }
+}
+
+
+PAR {
+    funcao1();
+    funcao2();
+}
+
+    

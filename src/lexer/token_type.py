@@ -26,6 +26,13 @@ class TokenType(Enum):
     LEN = auto()
     TO_INT = auto()
     THIS = auto()
+    
+    # Funções de string
+    STRLEN = auto()
+    SUBSTR = auto()
+    CHARAT = auto()
+    INDEXOF = auto()
+    PARSEINT = auto()
 
     # Operadores
     ASSIGN = auto()       # =
@@ -39,6 +46,11 @@ class TokenType(Enum):
     LT = auto()           # <
     GTE = auto()          # >=
     LTE = auto()          # <=
+    
+    # Operadores lógicos
+    AND = auto()          # &&
+    OR = auto()           # ||
+    REFERENCE = auto()    # &
 
     # Delimitadores
     LPAREN = auto()       # (

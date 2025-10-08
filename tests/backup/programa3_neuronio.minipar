@@ -1,14 +1,12 @@
-# ----------------- Funções auxiliares -----------------
 INT ativacao(FLOAT soma) {
-    if (soma >= 0) {
+    if soma >= 0 {
         return 1;
     } else {
         return 0;
     }
 }
 
-# ----------------- Classe Neuronio -----------------
-CLASS Neuronio {
+class Neuronio {
     FLOAT input_val;
     FLOAT output_desejado;
     FLOAT peso;
@@ -18,49 +16,48 @@ CLASS Neuronio {
     FLOAT erro;
     INT iteracao;
 
-    VOID __init__(FLOAT input_val_, FLOAT output_desejado_, FLOAT peso_inicial, FLOAT peso_bias_inicial, FLOAT taxa) {
-        input_val = input_val_;
-        output_desejado = output_desejado_;
-        peso = peso_inicial;
-        peso_bias = peso_bias_inicial;
-        bias = 1;
-        taxa_aprendizado = taxa;
-        erro = 999999;   # valor inicial grande
-        iteracao = 0;
+    VOID inicializar(FLOAT input_val_, FLOAT output_desejado_, FLOAT peso_inicial, FLOAT peso_bias_inicial, FLOAT taxa) {
+        this.input_val = input_val_;
+        this.output_desejado = output_desejado_;
+        this.peso = peso_inicial;
+        this.peso_bias = peso_bias_inicial;
+        this.bias = 1;
+        this.taxa_aprendizado = taxa;
+        this.erro = 999999;
+        this.iteracao = 0;
     }
 
     VOID treinar() {
-        PRINT("Entrada: " + input_val + " | Saída desejada: " + output_desejado);
-        WHILE erro != 0 {
-            iteracao = iteracao + 1;
-            PRINT("#### Iteração: " + iteracao);
-            PRINT("Peso: " + peso);
+        print("Entrada: " + this.input_val + " | Saida desejada: " + this.output_desejado);
+        while this.erro != 0 {
+            this.iteracao = this.iteracao + 1;
+            print("#### Iteracao: " + this.iteracao);
+            print("Peso: " + this.peso);
 
             FLOAT soma;
             INT saida;
-            soma = input_val * peso + bias * peso_bias;
+            soma = this.input_val * this.peso + this.bias * this.peso_bias;
             saida = ativacao(soma);
-            PRINT("Saída: " + saida);
+            print("Saida: " + saida);
 
-            erro = output_desejado - saida;
-            PRINT("Erro: " + erro);
+            this.erro = this.output_desejado - saida;
+            print("Erro: " + this.erro);
 
-            IF erro != 0 {
-                peso = peso + taxa_aprendizado * input_val * erro;
-                peso_bias = peso_bias + taxa_aprendizado * bias * erro;
+            if this.erro != 0 {
+                this.peso = this.peso + this.taxa_aprendizado * this.input_val * this.erro;
+                this.peso_bias = this.peso_bias + this.taxa_aprendizado * this.bias * this.erro;
             }
 
-            PRINT("Peso do bias: " + peso_bias);
+            print("Peso do bias: " + this.peso_bias);
         }
-        PRINT("✅ Parabéns! O neurônio aprendeu.");
-        PRINT("Valor desejado: " + output_desejado);
+        print("Parabens! O neuronio aprendeu.");
+        print("Valor desejado: " + this.output_desejado);
     }
 }
 
-# ----------------- Execução -----------------
 SEQ {
     Neuronio neuronio;
-    neuronio = NEW Neuronio();
-    neuronio.__init__(1, 0, 0.5, 0.5, 0.01);  # input_val=1, output_desejado=0
+    neuronio = new Neuronio();
+    neuronio.inicializar(1, 0, 0.5, 0.5, 0.01);
     neuronio.treinar();
 }

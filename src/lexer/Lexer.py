@@ -33,6 +33,11 @@ class Lexer:
             "len": TokenType.LEN,
             "to_int": TokenType.TO_INT,
             "this": TokenType.THIS,
+            "strlen": TokenType.STRLEN,
+            "substr": TokenType.SUBSTR,
+            "charat": TokenType.CHARAT,
+            "indexof": TokenType.INDEXOF,
+            "parseint": TokenType.PARSEINT,
         }
 
     # ------------------- Métodos utilitários -------------------
@@ -122,6 +127,20 @@ class Lexer:
                 continue
 
             # ------------------- Operadores compostos -------------------
+            if char == '&':
+                if self.match('&'):
+                    self.add_token(tokens, TokenType.AND, '&&', start_line, start_col)
+                else:
+                    self.add_token(tokens, TokenType.REFERENCE, '&', start_line, start_col)
+                continue
+            
+            if char == '|':
+                if self.match('|'):
+                    self.add_token(tokens, TokenType.OR, '||', start_line, start_col)
+                else:
+                    self.add_token(tokens, TokenType.UNKNOWN, '|', start_line, start_col)
+                continue
+
             if char == '=':
                 if self.match('='):
                     self.add_token(tokens, TokenType.EQ, '==', start_line, start_col)

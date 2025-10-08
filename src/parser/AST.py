@@ -173,27 +173,36 @@ class ConditionNode(ASTNode):
 
 
 class DeclarationNode(ASTNode):
-    def __init__(self, type_name, identifier, initial_value=None, is_array=False, array_size=None):
+    def __init__(self, type_name, identifier, initial_value=None, is_array=False, array_size=None, is_2d_array=False, array_dimensions=None):
         self.type_name = type_name
         self.identifier = identifier
         self.initial_value = initial_value
         self.is_array = is_array
         self.array_size = array_size
+        self.is_2d_array = is_2d_array
+        self.array_dimensions = array_dimensions  # [rows, cols] para arrays 2D
 
 
 class ArrayAccessNode(ASTNode):
-    def __init__(self, array_name, index):
+    def __init__(self, array_name, index, index2=None):
         self.array_name = array_name
         self.index = index
+        self.index2 = index2  # Para arrays 2D
 
 
 class ArrayAssignmentNode(ASTNode):
-    def __init__(self, array_name, index, expression):
+    def __init__(self, array_name, index, expression, index2=None):
         self.array_name = array_name
         self.index = index
         self.expression = expression
+        self.index2 = index2  # Para arrays 2D
 
 
 class ArrayInitNode(ASTNode):
     def __init__(self, elements):
         self.elements = elements
+
+
+class BraceInitNode(ASTNode):
+    def __init__(self, values):
+        self.values = values  # Lista de valores para inicialização com {}

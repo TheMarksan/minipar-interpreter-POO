@@ -152,19 +152,40 @@ class Parser:
         identifier = self.expect(TokenType.IDENT).lexeme
         
         is_array = False
+        is_2d_array = False
         array_size = None
+        array_dimensions = None
         initial_value = None
         
+        # Verificar se é array [tamanho] ou [dim1][dim2]
         if self.match(TokenType.LBRACKET):
             self.advance()
             is_array = True
+            
             if not self.match(TokenType.RBRACKET):
-                array_size = self.parse_expression()
-            self.expect(TokenType.RBRACKET)
+                first_size = self.parse_expression()
+                self.expect(TokenType.RBRACKET)
+                
+                # Verificar se há uma segunda dimensão
+                if self.match(TokenType.LBRACKET):
+                    self.advance()
+                    is_2d_array = True
+                    second_size = None
+                    if not self.match(TokenType.RBRACKET):
+                        second_size = self.parse_expression()
+                    self.expect(TokenType.RBRACKET)
+                    array_dimensions = [first_size, second_size]
+                else:
+                    array_size = first_size
+            else:
+                self.expect(TokenType.RBRACKET)
         
+        # Verificar inicialização
         if self.match(TokenType.ASSIGN):
             self.advance()
-            if self.match(TokenType.LBRACKET):
+            if self.match(TokenType.LBRACE):
+                initial_value = self.parse_brace_init()
+            elif self.match(TokenType.LBRACKET):
                 initial_value = self.parse_array_init()
             else:
                 initial_value = self.parse_expression()
@@ -172,7 +193,7 @@ class Parser:
         if self.match(TokenType.SEMICOLON):
             self.advance()
         
-        return DeclarationNode(type_name, identifier, initial_value, is_array, array_size)
+        return DeclarationNode(type_name, identifier, initial_value, is_array, array_size, is_2d_array, array_dimensions)
     
     def parse_array_init(self):
         self.expect(TokenType.LBRACKET)
@@ -187,6 +208,20 @@ class Parser:
         
         self.expect(TokenType.RBRACKET)
         return ArrayInitNode(elements)
+    
+    def parse_brace_init(self):
+        self.expect(TokenType.LBRACE)
+        values = []
+        
+        if not self.match(TokenType.RBRACE):
+            while True:
+                values.append(self.parse_expression())
+                if not self.match(TokenType.COMMA):
+                    break
+                self.advance()
+        
+        self.expect(TokenType.RBRACE)
+        return BraceInitNode(values)
 
     def parse_block(self):
         block_type = self.advance().lexeme.lower()
@@ -306,6 +341,13 @@ class Parser:
                 index = self.parse_expression()
                 self.expect(TokenType.RBRACKET)
                 
+                # Verificar se há segunda dimensão
+                index2 = None
+                if self.match(TokenType.LBRACKET):
+                    self.advance()
+                    index2 = self.parse_expression()
+                    self.expect(TokenType.RBRACKET)
+                
                 if self.match(TokenType.ASSIGN):
                     self.advance()
                     
@@ -321,17 +363,17 @@ class Parser:
                         
                         temp_var = f"__temp_input_{array_name}"
                         input_node = InputNode(temp_var, prompt)
-                        assign_node = ArrayAssignmentNode(array_name, index, IdentifierNode(temp_var))
+                        assign_node = ArrayAssignmentNode(array_name, index, IdentifierNode(temp_var), index2)
                         return BlockNode("seq", [input_node, assign_node])
                     else:
                         expression = self.parse_expression()
                         if self.match(TokenType.SEMICOLON):
                             self.advance()
-                        return ArrayAssignmentNode(array_name, index, expression)
+                        return ArrayAssignmentNode(array_name, index, expression, index2)
                 else:
                     if self.match(TokenType.SEMICOLON):
                         self.advance()
-                    return ArrayAccessNode(array_name, index)
+                    return ArrayAccessNode(array_name, index, index2)
             elif self.peek().type == TokenType.ASSIGN:
                 identifier = self.advance().lexeme
                 self.expect(TokenType.ASSIGN)
@@ -463,6 +505,30 @@ class Parser:
         return args
 
     def parse_condition(self):
+        left = self.parse_logical_and()
+        return left
+    
+    def parse_logical_and(self):
+        left = self.parse_logical_or()
+        
+        while self.match(TokenType.AND):
+            operator = self.advance().lexeme
+            right = self.parse_logical_or()
+            left = BinaryOpNode(left, operator, right)
+        
+        return left
+    
+    def parse_logical_or(self):
+        left = self.parse_relational()
+        
+        while self.match(TokenType.OR):
+            operator = self.advance().lexeme
+            right = self.parse_relational()
+            left = BinaryOpNode(left, operator, right)
+        
+        return left
+    
+    def parse_relational(self):
         left = self.parse_expression()
         
         if self.match(TokenType.EQ, TokenType.NEQ, TokenType.GT, TokenType.LT, TokenType.GTE, TokenType.LTE):
@@ -526,7 +592,15 @@ class Parser:
                 self.advance()
                 index = self.parse_expression()
                 self.expect(TokenType.RBRACKET)
-                return ArrayAccessNode(name, index)
+                
+                # Verificar se há segunda dimensão
+                index2 = None
+                if self.match(TokenType.LBRACKET):
+                    self.advance()
+                    index2 = self.parse_expression()
+                    self.expect(TokenType.RBRACKET)
+                
+                return ArrayAccessNode(name, index, index2)
             elif self.match(TokenType.DOT):
                 self.advance()
                 attr_or_method = self.expect(TokenType.IDENT).lexeme
@@ -543,6 +617,12 @@ class Parser:
             expr = self.parse_expression()
             self.expect(TokenType.RPAREN)
             return expr
+        elif self.match(TokenType.STRLEN, TokenType.SUBSTR, TokenType.CHARAT, TokenType.INDEXOF, TokenType.PARSEINT):
+            name = self.advance().lexeme
+            self.expect(TokenType.LPAREN)
+            args = self.parse_arguments()
+            self.expect(TokenType.RPAREN)
+            return FunctionCallNode(name, args)
         elif self.match(TokenType.MINUS):
             operator = self.advance().lexeme
             operand = self.parse_unary()

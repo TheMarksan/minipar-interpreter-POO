@@ -203,10 +203,40 @@ class Interpreter:
         
         if node.type_name.lower() == "c_channel":
             value = Channel()
+        elif node.is_2d_array and node.array_dimensions:
+            # Array bidimensional
+            rows = self.evaluate_expression(node.array_dimensions[0])
+            cols = self.evaluate_expression(node.array_dimensions[1]) if node.array_dimensions[1] else 0
+            
+            if node.initial_value:
+                if isinstance(node.initial_value, BraceInitNode):
+                    # Inicialização com {1, 2, 3, 4, 5, 6}
+                    flat_values = [self.evaluate_expression(val) for val in node.initial_value.values]
+                    # Criar matriz rows x cols
+                    value = []
+                    for i in range(int(rows)):
+                        row = []
+                        for j in range(int(cols)):
+                            idx = i * int(cols) + j
+                            if idx < len(flat_values):
+                                row.append(flat_values[idx])
+                            else:
+                                row.append(None)
+                        value.append(row)
+                else:
+                    # Inicialização com expressão
+                    init_val = self.evaluate_expression(node.initial_value)
+                    value = [[init_val for _ in range(int(cols))] for _ in range(int(rows))]
+            else:
+                # Array vazio
+                value = [[None for _ in range(int(cols))] for _ in range(int(rows))]
         elif node.is_array:
+            # Array unidimensional
             if node.initial_value:
                 if isinstance(node.initial_value, ArrayInitNode):
                     value = [self.evaluate_expression(elem) for elem in node.initial_value.elements]
+                elif isinstance(node.initial_value, BraceInitNode):
+                    value = [self.evaluate_expression(val) for val in node.initial_value.values]
                 else:
                     value = self.evaluate_expression(node.initial_value)
             elif node.array_size:
@@ -245,9 +275,18 @@ class Interpreter:
     def execute_array_assignment(self, node):
         array = self.get_variable(node.array_name)
         if isinstance(array, list):
-            index = self.evaluate_expression(node.index)
-            value = self.evaluate_expression(node.expression)
-            array[int(index)] = value
+            if node.index2 is not None:
+                # Array bidimensional
+                index1 = self.evaluate_expression(node.index)
+                index2 = self.evaluate_expression(node.index2)
+                value = self.evaluate_expression(node.expression)
+                if isinstance(array[int(index1)], list):
+                    array[int(index1)][int(index2)] = value
+            else:
+                # Array unidimensional
+                index = self.evaluate_expression(node.index)
+                value = self.evaluate_expression(node.expression)
+                array[int(index)] = value
     
     def execute_if(self, node):
         condition = self.evaluate_condition(node.condition)
@@ -297,6 +336,10 @@ class Interpreter:
             self.global_scope[node.identifier] = value
     
     def execute_function_call(self, node):
+        # Verificar se é uma função nativa de string
+        if node.name.lower() in ['strlen', 'substr', 'charat', 'indexof', 'parseint']:
+            return self.execute_native_string_function(node.name.lower(), node.arguments)
+        
         if node.name not in self.functions:
             return None
         
@@ -318,6 +361,64 @@ class Interpreter:
             return e.value
         
         self.local_scope = old_local
+        return None
+    
+    def execute_native_string_function(self, func_name, arguments):
+        if func_name == 'strlen':
+            if len(arguments) >= 1:
+                string_arg = self.evaluate_expression(arguments[0])
+                return len(str(string_arg))
+        
+        elif func_name == 'substr':
+            if len(arguments) >= 3:
+                string_arg = self.evaluate_expression(arguments[0])
+                start = int(self.evaluate_expression(arguments[1]))
+                length = int(self.evaluate_expression(arguments[2]))
+                return str(string_arg)[start:start + length]
+        
+        elif func_name == 'charat':
+            if len(arguments) >= 2:
+                string_arg = self.evaluate_expression(arguments[0])
+                index = int(self.evaluate_expression(arguments[1]))
+                string_str = str(string_arg)
+                if 0 <= index < len(string_str):
+                    return string_str[index]
+                return ""
+        
+        elif func_name == 'indexof':
+            if len(arguments) >= 2:
+                string_arg = self.evaluate_expression(arguments[0])
+                char_to_find = str(self.evaluate_expression(arguments[1]))
+                start_pos = 0
+                if len(arguments) >= 3:
+                    start_pos = int(self.evaluate_expression(arguments[2]))
+                
+                string_str = str(string_arg)
+                try:
+                    return string_str.index(char_to_find, start_pos)
+                except ValueError:
+                    return -1
+        
+        elif func_name == 'parseint':
+            if len(arguments) >= 1:
+                string_arg = self.evaluate_expression(arguments[0])
+                string_str = str(string_arg).strip()
+                try:
+                    return int(string_str)
+                except ValueError:
+                    # Tentar extrair apenas os dígitos e sinal
+                    clean_str = ""
+                    for i, char in enumerate(string_str):
+                        if char == '-' and i == 0:
+                            clean_str += char
+                        elif char.isdigit():
+                            clean_str += char
+                        elif char == ' ':
+                            break
+                    if clean_str and clean_str != '-':
+                        return int(clean_str)
+                    return 0
+        
         return None
     
     def execute_method_call(self, node):
@@ -415,6 +516,9 @@ class Interpreter:
                 return -operand
             return operand
         elif isinstance(node, FunctionCallNode):
+            # Verificar se é uma função nativa de string
+            if node.name.lower() in ['strlen', 'substr', 'charat', 'indexof', 'parseint']:
+                return self.execute_native_string_function(node.name.lower(), node.arguments)
             return self.execute_function_call(node)
         elif isinstance(node, MethodCallNode):
             return self.execute_method_call(node)
@@ -429,8 +533,16 @@ class Interpreter:
     def evaluate_array_access(self, node):
         array = self.get_variable(node.array_name)
         if isinstance(array, list):
-            index = self.evaluate_expression(node.index)
-            return array[int(index)]
+            if node.index2 is not None:
+                # Array bidimensional
+                index1 = self.evaluate_expression(node.index)
+                index2 = self.evaluate_expression(node.index2)
+                if isinstance(array[int(index1)], list):
+                    return array[int(index1)][int(index2)]
+            else:
+                # Array unidimensional
+                index = self.evaluate_expression(node.index)
+                return array[int(index)]
         return None
     
     def evaluate_condition(self, node):
@@ -456,6 +568,10 @@ class Interpreter:
             if isinstance(left, int) and isinstance(right, int):
                 return left // right
             return left / right
+        elif operator == '&&':
+            return bool(left) and bool(right)
+        elif operator == '||':
+            return bool(left) or bool(right)
         return None
     
     def apply_comparison(self, left, operator, right):
