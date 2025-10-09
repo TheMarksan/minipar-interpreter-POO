@@ -1,100 +1,163 @@
-# BNF Completa MiniPar 2025.1 - Orientado a Objeto
+# BNF Completa MiniPar 2025.1 - Orientado a Objeto (Implementado)
 
 ```bnf
-<programa_minipar> ::= { <comentario> | <classe> | <funcao> }
+# ------------------- Programa Principal -------------------
+<programa_minipar> ::= { <comentario> | <classe> | <funcao> | <declaracao_global> | <bloco_stmt> }
 
 # ------------------- Comentários -------------------
-<comentario> ::= "#" { <caractere> }
+<comentario> ::= "#" { <caractere_ate_fim_linha> }
 
 # ------------------- Funções -------------------
-<funcao> ::= <tipo_retorno> <identificador>() { <bloco_stmt> }
+<funcao> ::= <tipo_retorno> <identificador> "(" [ <parametros> ] ")" "{" <stmts_lista> "}"
+
+<parametros> ::= <parametro> { "," <parametro> }
+
+<parametro> ::= <tipo_var> <identificador> [ "[" "]" ]  # Suporte a arrays como parâmetros
+
+<tipo_retorno> ::= "void" | "int" | "float" | "string" | "bool" | <identificador>
+
+<tipo_var> ::= "int" | "float" | "string" | "bool" | "c_channel" | <identificador>
 
 # ------------------- Classes -------------------
-<classe> ::= class <identificador> [ extends <identificador> ] 
-            { 
+<classe> ::= "class" <identificador> [ "extends" <identificador> ] 
+            "{" 
                 { <declaracao_atributo> } 
                 { <declaracao_metodo> } 
-            }
+            "}"
 
-<declaracao_atributo> ::= <tipo_var> <identificador>
+<declaracao_atributo> ::= <tipo_var> <identificador> [ <dimensao_array> ] [ ";" ]
 
-<declaracao_metodo> ::= <tipo_retorno> <identificador>() { <bloco_stmt> }
+<dimensao_array> ::= "[" [ <expr> ] "]" [ "[" [ <expr> ] "]" ]  # Suporte a arrays 1D e 2D
 
-<tipo_retorno> ::= void | int | float | string | <identificador>
+<declaracao_metodo> ::= <tipo_retorno> <identificador> "(" [ <parametros> ] ")" "{" <stmts_lista> "}"
 
-<tipo_var> ::= bool | int | float | string | <identificador> | c_channel
+# ------------------- Declarações -------------------
+<declaracao_global> ::= <tipo_var> <identificador> [ <dimensao_array> ] [ "=" <inicializacao> ] [ ";" ]
 
-# ------------------- Blocos SEQ/PAR aninháveis -------------------
-<bloco_stmt> ::= seq { <stmts_lista> } 
-               | par { <stmts_lista> }
+<inicializacao> ::= <expr> 
+                  | "[" <lista_valores> "]"  # Inicialização de array
+                  | "{" <lista_valores> "}"  # Inicialização com chaves
 
-<stmts_lista> ::= { <stmts> }
+<lista_valores> ::= <expr> { "," <expr> }
 
-<stmts> ::= <atribuicao>
-          | <if_stmt>
-          | <while_stmt>
-          | <for_stmt>
-          | <instanciacao>
-          | <chamada_metodo>
-          | <chamada_funcao>
-          | <print_comando>
-          | <input_comando>
-          | <send>
-          | <receive>
-          | <bloco_stmt>     # Permite blocos SEQ/PAR dentro de outros blocos
-          | <comentario>
+# ------------------- Blocos SEQ/PAR -------------------
+<bloco_stmt> ::= ( "seq" | "par" ) "{" <stmts_lista> "}"
 
-# ------------------- Comandos -------------------
-<atribuicao> ::= <identificador> = <expr>
+<stmts_lista> ::= { <stmt> }
 
-<if_stmt> ::= if <condicao> { <stmts_lista> } [ else { <stmts_lista> } ]
+<stmt> ::= <declaracao>
+         | <atribuicao>
+         | <atribuicao_array>
+         | <atribuicao_atributo>
+         | <if_stmt>
+         | <while_stmt>
+         | <for_stmt>
+         | <instanciacao>
+         | <chamada_metodo>
+         | <chamada_funcao>
+         | <print_comando>
+         | <input_comando>
+         | <send>
+         | <receive>
+         | <return_stmt>
+         | <bloco_stmt>        # Blocos aninhados
+         | <comentario>
+         | <acesso_this>
 
-<while_stmt> ::= while <condicao> { <stmts_lista> }
+# ------------------- Comandos Básicos -------------------
+<declaracao> ::= <tipo_var> <identificador> [ <dimensao_array> ] [ "=" <inicializacao> ] [ ";" ]
 
-<for_stmt> ::= for <identificador> = <expr>; <condicao>; <incremento> { <stmts_lista> }
+<atribuicao> ::= <identificador> "=" <expr> [ ";" ]
 
-<instanciacao> ::= <identificador> <identificador> = new <identificador>()
+<atribuicao_array> ::= <identificador> "[" <expr> "]" [ "[" <expr> "]" ] "=" <expr> [ ";" ]
 
-<chamada_metodo> ::= <identificador>.<identificador>()
+<atribuicao_atributo> ::= <identificador> "." <identificador> "=" <expr> [ ";" ]
+                        | "this" "." <identificador> "=" <expr> [ ";" ]
+                        | "this" "." <identificador> "[" <expr> "]" [ "[" <expr> "]" ] "=" <expr> [ ";" ]
 
-<chamada_funcao> ::= <identificador>() 
+<acesso_this> ::= "this" "." <identificador> 
+                | "this" "." <identificador> "[" <expr> "]" [ "[" <expr> "]" ]
+                | "this" "." <identificador> "(" [ <argumentos> ] ")"
 
-<print_comando> ::= print( <texto> | <expr> )
+# ------------------- Estruturas de Controle -------------------
+<if_stmt> ::= "if" <condicao> "{" <stmts_lista> "}" 
+             [ "else" ( "if" <condicao> "{" <stmts_lista> "}" | "{" <stmts_lista> "}" ) ]
 
-<input_comando> ::= <identificador> = input( [ <texto> ] )
+<while_stmt> ::= "while" <condicao> "{" <stmts_lista> "}"
 
-<send> ::= <identificador>.send( { <expr> | <identificador> }+ )
+<for_stmt> ::= "for" <identificador> "=" <expr> ";" <condicao> ";" 
+               <identificador> "=" <expr> "{" <stmts_lista> "}"
 
-<receive> ::= <identificador>.receive( { <identificador> }+ )
+# ------------------- Orientação a Objetos -------------------
+<instanciacao> ::= <identificador> <identificador> "=" "new" <identificador> "(" ")" [ ";" ]
+
+<chamada_metodo> ::= <identificador> "." <identificador> "(" [ <argumentos> ] ")" [ ";" ]
+                   | <identificador> "." "send" "(" <argumentos> ")" [ ";" ]
+                   | <identificador> "." "receive" "(" <lista_identificadores> ")" [ ";" ]
+
+<chamada_funcao> ::= <identificador> "(" [ <argumentos> ] ")" [ ";" ]
+
+<argumentos> ::= <expr> { "," <expr> }
+
+<lista_identificadores> ::= <identificador> { "," <identificador> }
+
+# ------------------- Comandos de I/O -------------------
+<print_comando> ::= "print" "(" <expr> ")" [ ";" ]
+
+<input_comando> ::= <identificador> "=" "input" "(" [ <expr> ] ")" [ ";" ]
+
+<return_stmt> ::= "return" <expr> [ ";" ]
+
+# ------------------- Comunicação (Canais) -------------------
+<send> ::= <identificador> "." "send" "(" <argumentos> ")" [ ";" ]
+
+<receive> ::= <identificador> "." "receive" "(" <lista_identificadores> ")" [ ";" ]
 
 # ------------------- Expressões -------------------
+<condicao> ::= <expr_logica_and>
+
+<expr_logica_and> ::= <expr_logica_or> { "&&" <expr_logica_or> }
+
+<expr_logica_or> ::= <expr_relacional> { "||" <expr_relacional> }
+
+<expr_relacional> ::= <expr> [ <operador_relacional> <expr> ]
+
 <expr> ::= <expr_aditivo>
 
-<expr_aditivo> ::= <expr_aditivo> + <expr_multiplicativo>
-                 | <expr_aditivo> - <expr_multiplicativo>
-                 | <expr_multiplicativo>
+<expr_aditivo> ::= <expr_multiplicativo> { ( "+" | "-" ) <expr_multiplicativo> }
 
-<expr_multiplicativo> ::= <expr_multiplicativo> * <expr_unario>
-                        | <expr_multiplicativo> / <expr_unario>
-                        | <expr_unario>
+<expr_multiplicativo> ::= <expr_unario> { ( "*" | "/" ) <expr_unario> }
 
-<expr_unario> ::= <numero> | <identificador> | ( <expr> )
+<expr_unario> ::= <numero>
+                | <texto>
+                | <identificador>
+                | <identificador> "[" <expr> "]" [ "[" <expr> "]" ]
+                | <identificador> "." <identificador>
+                | <identificador> "." <identificador> "(" [ <argumentos> ] ")"
+                | <identificador> "(" [ <argumentos> ] ")"
+                | "this" "." <identificador>
+                | "this" "." <identificador> "[" <expr> "]" [ "[" <expr> "]" ]
+                | "new" <identificador> "(" ")"
+                | "(" <expr> ")"
+                | "-" <expr_unario>
+                | <funcao_string>
 
-<condicao> ::= <expr> <operador_relacional> <expr>
+<funcao_string> ::= ( "strlen" | "substr" | "charat" | "indexof" | "parseint" ) "(" <argumentos> ")"
 
-<incremento> ::= <identificador> = <identificador> + <numero>
+<operador_relacional> ::= "==" | "!=" | ">" | "<" | ">=" | "<="
 
-<operador_relacional> ::= == | != | > | < | >= | <=
+# ------------------- Literais e Identificadores -------------------
+<identificador> ::= ( <letra> | "_" ) { <letra> | <digito> | "_" }
 
-# ------------------- Identificadores e Literais -------------------
-<identificador> ::= <letra> { <letra> | <digito> }
+<texto> ::= '"' { <caractere> } '"'
 
-<texto> ::= "{" { <caractere> } "}"
-
-<numero> ::= <digito> { <digito> } [ . <digito>+ ]
+<numero> ::= <digito> { <digito> } [ "." <digito> { <digito> } ]
 
 <letra> ::= "A" | ... | "Z" | "a" | ... | "z"
 
 <digito> ::= "0" | ... | "9"
 
-<caractere> ::= qualquer símbolo visível (exceto aspas internas)
+<caractere> ::= qualquer caractere visível exceto '"' (com suporte a escape no futuro)
+
+<caractere_ate_fim_linha> ::= qualquer caractere exceto '\n'
+```
