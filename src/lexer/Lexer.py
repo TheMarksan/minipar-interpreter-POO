@@ -172,6 +172,7 @@ class Lexer:
             # ------------------- Símbolos isolados -------------------
             symbols = {
                 '+': TokenType.PLUS, '-': TokenType.MINUS, '*': TokenType.MUL,
+                '%': TokenType.MOD,
                 '(': TokenType.LPAREN, ')': TokenType.RPAREN,
                 '{': TokenType.LBRACE, '}': TokenType.RBRACE,
                 '[': TokenType.LBRACKET, ']': TokenType.RBRACKET,

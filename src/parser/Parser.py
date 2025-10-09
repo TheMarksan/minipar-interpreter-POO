@@ -705,7 +705,7 @@ class Parser:
     def parse_multiplicative(self):
         left = self.parse_unary()
         
-        while self.match(TokenType.MUL, TokenType.DIV):
+        while self.match(TokenType.MUL, TokenType.DIV, TokenType.MOD):
             operator = self.advance().lexeme
             right = self.parse_unary()
             left = BinaryOpNode(left, operator, right)

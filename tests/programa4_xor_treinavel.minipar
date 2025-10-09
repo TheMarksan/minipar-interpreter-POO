@@ -1,0 +1,97 @@
+
+
+float sigmoid(float x) {
+    if x < -6 { return 0.0; }
+    if x > 6 { return 1.0; }
+    return 0.5 + x / 12.0;
+}
+###############################################
+# Programa 4 - Versão Treinável Simplificada (lowercase keywords)
+###############################################
+
+float sigmoid(float x) {
+    if x < -6 { return 0.0; }
+    if x > 6 { return 1.0; }
+    return 0.5 + x / 12.0;
+}
+
+float sigmoid_deriv(float y) {
+    return y * (1.0 - y);
+}
+
+class RedeXor {
+    float w_h1[2]; float b_h1;
+    float w_h2[2]; float b_h2;
+    float w_h3[2]; float b_h3;
+    float w_out[3]; float b_out;
+    float taxa;
+
+    void init(float t) {
+        this.taxa = t;
+        this.w_h1[0]=0.15; this.w_h1[1]=0.20; this.b_h1=0.0;
+        this.w_h2[0]=0.25; this.w_h2[1]=0.30; this.b_h2=0.0;
+        this.w_h3[0]=0.40; this.w_h3[1]=0.45; this.b_h3=0.0;
+        this.w_out[0]=0.50; this.w_out[1]=0.55; this.w_out[2]=0.60; this.b_out=0.0;
+    }
+
+    float forward(float a, float b) {
+        float h1; float h2; float h3; float o;
+        h1 = sigmoid(this.w_h1[0]*a + this.w_h1[1]*b + this.b_h1);
+        h2 = sigmoid(this.w_h2[0]*a + this.w_h2[1]*b + this.b_h2);
+        h3 = sigmoid(this.w_h3[0]*a + this.w_h3[1]*b + this.b_h3);
+        o = sigmoid(this.w_out[0]*h1 + this.w_out[1]*h2 + this.w_out[2]*h3 + this.b_out);
+        return o;
+    }
+
+    void atualiza(float a, float b, float alvo) {
+        float h1; float h2; float h3; float o;
+        float dh1; float dh2; float dh3; float do_; float erro;
+        h1 = sigmoid(this.w_h1[0]*a + this.w_h1[1]*b + this.b_h1);
+        h2 = sigmoid(this.w_h2[0]*a + this.w_h2[1]*b + this.b_h2);
+        h3 = sigmoid(this.w_h3[0]*a + this.w_h3[1]*b + this.b_h3);
+        o  = sigmoid(this.w_out[0]*h1 + this.w_out[1]*h2 + this.w_out[2]*h3 + this.b_out);
+        erro = alvo - o;
+        do_ = erro * sigmoid_deriv(o);
+        dh1 = do_ * this.w_out[0] * sigmoid_deriv(h1);
+        dh2 = do_ * this.w_out[1] * sigmoid_deriv(h2);
+        dh3 = do_ * this.w_out[2] * sigmoid_deriv(h3);
+        this.w_out[0] = this.w_out[0] + h1 * do_ * this.taxa;
+        this.w_out[1] = this.w_out[1] + h2 * do_ * this.taxa;
+        this.w_out[2] = this.w_out[2] + h3 * do_ * this.taxa;
+        this.b_out    = this.b_out + do_ * this.taxa;
+        this.w_h1[0] = this.w_h1[0] + a * dh1 * this.taxa; this.w_h1[1] = this.w_h1[1] + b * dh1 * this.taxa; this.b_h1 = this.b_h1 + dh1 * this.taxa;
+        this.w_h2[0] = this.w_h2[0] + a * dh2 * this.taxa; this.w_h2[1] = this.w_h2[1] + b * dh2 * this.taxa; this.b_h2 = this.b_h2 + dh2 * this.taxa;
+        this.w_h3[0] = this.w_h3[0] + a * dh3 * this.taxa; this.w_h3[1] = this.w_h3[1] + b * dh3 * this.taxa; this.b_h3 = this.b_h3 + dh3 * this.taxa;
+    }
+
+    void treinar(int epocas) {
+        int e;
+        float a0; float a1; float b0; float b1; float c0; float c1; float d0; float d1;
+        float y0; float y1; float y2; float y3;
+        a0=0; a1=0; b0=0; b1=1; c0=1; c1=0; d0=1; d1=1;
+        y0=0; y1=1; y2=1; y3=0;
+        for e = 0; e < epocas; e = e + 1 {
+            this.atualiza(a0,a1,y0);
+            this.atualiza(b0,b1,y1);
+            this.atualiza(c0,c1,y2);
+            this.atualiza(d0,d1,y3);
+        }
+    }
+
+    void testar() {
+        float o;
+        o = this.forward(0,0); print("Input: [0, 0], Predicted Output: " + o);
+        o = this.forward(0,1); print("Input: [0, 1], Predicted Output: " + o);
+        o = this.forward(1,0); print("Input: [1, 0], Predicted Output: " + o);
+        o = this.forward(1,1); print("Input: [1, 1], Predicted Output: " + o);
+    }
+}
+
+seq {
+    RedeXor r;
+    r = new RedeXor();
+    r.init(0.6);
+    r.treinar(200);
+    r.testar();
+}
+        

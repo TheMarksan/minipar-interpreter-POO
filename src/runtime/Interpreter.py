@@ -621,6 +621,12 @@ class Interpreter:
             if isinstance(left, int) and isinstance(right, int):
                 return left // right
             return left / right
+        elif operator == '%':
+            if right == 0:
+                raise ZeroDivisionError("Modulo by zero")
+            if isinstance(left, float) or isinstance(right, float):
+                return float(left) % float(right)
+            return left % right
         elif operator == '&&':
             return bool(left) and bool(right)
         elif operator == '||':

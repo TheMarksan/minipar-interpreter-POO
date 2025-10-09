@@ -40,6 +40,7 @@ class TokenType(Enum):
     MINUS = auto()        # -
     MUL = auto()          # *
     DIV = auto()          # /
+    MOD = auto()          # %
     EQ = auto()           # ==
     NEQ = auto()          # !=
     GT = auto()           # >
