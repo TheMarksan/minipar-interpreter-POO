@@ -1,46 +1,73 @@
+# ============================================================================
+# Parser.py - Analisador Sintático (Parser) 
+# ============================================================================
+# Implementa um parser descendente recursivo (Recursive Descent Parser) para
+# a linguagem MiniPar. Utiliza lookahead (LL(k)) para analisar tokens e
+# construir a Árvore de Sintaxe Abstrata (AST).
+#
+# Características:
+# - Lookahead de 1-2 tokens para decisões de parsing
+# - Precedência de operadores (multiplicação > adição > relacional > lógico)
+# - Suporte a estruturas OO, concorrência (SEQ/PAR), arrays 1D/2D
+# ============================================================================
+
 from lexer.token_type import TokenType
 from parser.AST import *
 
 
 class Parser:
+    """Parser descendente recursivo para MiniPar."""
+    
     def __init__(self, tokens):
-        self.tokens = tokens
-        self.pos = 0
+        """Inicializa o parser com lista de tokens do lexer."""
+        self.tokens = tokens  # Lista de tokens gerados pelo lexer
+        self.pos = 0          # Posição atual na lista de tokens
 
     def current_token(self):
+        """Retorna o token atual sem avançar."""
         if self.pos < len(self.tokens):
             return self.tokens[self.pos]
-        return self.tokens[-1]
+        return self.tokens[-1]  # Retorna EOF se passou do fim
 
     def peek(self, offset=1):
+        """Olha adiante (lookahead) sem consumir tokens."""
         pos = self.pos + offset
         if pos < len(self.tokens):
             return self.tokens[pos]
         return self.tokens[-1]
 
     def advance(self):
+        """Consome e retorna o token atual, avançando para o próximo."""
         token = self.current_token()
         if token.type != TokenType.EOF:
             self.pos += 1
         return token
 
     def expect(self, token_type):
+        """Consome token se for do tipo esperado, senão lança erro de sintaxe."""
         token = self.current_token()
         if token.type != token_type:
             raise SyntaxError(f"Expected {token_type}, got {token.type} at line {token.line}, column {token.column}")
         return self.advance()
 
     def match(self, *token_types):
+        """Verifica se o token atual é um dos tipos especificados."""
         return self.current_token().type in token_types
 
     def skip_comments(self):
+        """Pula todos os comentários consecutivos."""
         while self.match(TokenType.COMMENT):
             self.advance()
 
     def parse(self):
+        """Inicia o processo de parsing e retorna a AST."""
         return self.programa_minipar()
 
     def programa_minipar(self):
+        """
+        Parse do programa completo.
+        Processa classes, funções globais, declarações e blocos SEQ/PAR.
+        """
         program = ProgramNode()
         self.skip_comments()
         
@@ -76,6 +103,10 @@ class Parser:
         return program
 
     def parse_class(self):
+        """
+        Parse de definição de classe com herança opcional.
+        Sintaxe: class Nome [extends Pai] { atributos e métodos }
+        """
         self.expect(TokenType.CLASS)
         name = self.expect(TokenType.IDENT).lexeme
         
@@ -156,6 +187,11 @@ class Parser:
         return ClassNode(name, parent, attributes, methods)
 
     def parse_function(self):
+        """
+        Parse de função global.
+        Sintaxe: tipo nome(parametros) { corpo }
+        Suporta parâmetros array com [] no tipo.
+        """
         return_type = self.advance().lexeme
         name = self.expect(TokenType.IDENT).lexeme
         self.expect(TokenType.LPAREN)

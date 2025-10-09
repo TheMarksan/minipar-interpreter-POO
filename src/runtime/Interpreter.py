@@ -4,6 +4,18 @@ import threading
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
+# ============================================================================
+# Interpreter.py - Interpretador da Linguagem MiniPar
+# ============================================================================
+# Executa a AST gerada pelo parser, implementando:
+# - Orientação a Objetos (classes, herança, instanciação)
+# - Concorrência com blocos PAR (threads Python)
+# - Comunicação entre threads via canais (Channels)
+# - Arrays 1D e 2D
+# - Funções nativas de string
+# - Tabela de símbolos thread-safe
+# ============================================================================
+
 from parser.AST import *
 from runtime.Channel import Channel
 from runtime.ThreadManager import ThreadManager
@@ -11,16 +23,18 @@ from symbol_table.SymbolTable import SymbolTable
 
 
 class ReturnException(Exception):
+    """Exceção usada para implementar RETURN em funções."""
     def __init__(self, value):
         self.value = value
 
 
 class ObjectInstance:
+    """Representa uma instância de objeto em runtime."""
     def __init__(self, class_name, class_def, parent_classes=None):
         self.class_name = class_name
         self.class_def = class_def
         self.parent_classes = parent_classes or {}
-        self.attributes = {}
+        self.attributes = {}  # Armazena valores dos atributos
         
         for attr in class_def.attributes:
             if hasattr(attr, 'is_2d_array') and attr.is_2d_array and hasattr(attr, 'array_dimensions') and attr.array_dimensions:
