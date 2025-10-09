@@ -1,5 +1,6 @@
 # Makefile para MiniPar Interpreter
-# Uso: make test1 [--ast] [--tokens] [--table]
+# Uso: make test1 [TOKENS=1] [AST=1] [TABLE=1]
+# Exemplo: make test1 TOKENS=1 AST=1
 
 # Variáveis
 PYTHON = python3
@@ -22,28 +23,19 @@ PROGRAMA5 = $(TESTS_DIR)/programa5_recomendacao.minipar
 PROGRAMA6 = $(TESTS_DIR)/programa6_quicksort.minipar
 HELLO = $(TESTS_DIR)/hello_world.minipar
 
-# Processa flags opcionais
+# Processa flags opcionais via variáveis
 FLAGS =
-ifeq (--tokens,$(filter --tokens,$(MAKECMDGOALS)))
+ifdef TOKENS
 	FLAGS += --show-tokens
 endif
-ifeq (--ast,$(filter --ast,$(MAKECMDGOALS)))
+ifdef AST
 	FLAGS += --show-ast
 endif
-ifeq (--table,$(filter --table,$(MAKECMDGOALS)))
+ifdef TABLE
 	FLAGS += --show-symbols
 endif
 
-# Dummy targets para as flags (evita erro "No rule to make target")
---tokens:
-	@:
---ast:
-	@:
---table:
-	@:
-
-.PHONY: help clean test-all test1 test2 test3 test4 test5 test6 hello \
-        --tokens --ast --table
+.PHONY: help clean test-all test1 test2 test3 test4 test5 test6 hello
 
 # Target padrão
 .DEFAULT_GOAL := help
@@ -54,7 +46,7 @@ help:
 	@echo "$(BLUE)         MiniPar Interpreter - Sistema de Build            $(NC)"
 	@echo "$(BLUE)═══════════════════════════════════════════════════════════$(NC)"
 	@echo ""
-	@echo "$(GREEN)Uso:$(NC) make <test> [--ast] [--tokens] [--table]"
+	@echo "$(GREEN)Uso:$(NC) make <test> [TOKENS=1] [AST=1] [TABLE=1]"
 	@echo ""
 	@echo "$(YELLOW)Testes Disponíveis:$(NC)"
 	@echo "  test1        - Cliente-Servidor com Calculadora"
@@ -66,18 +58,18 @@ help:
 	@echo "  hello        - Hello World"
 	@echo "  test-all     - Executa todos os testes"
 	@echo ""
-	@echo "$(YELLOW)Flags Opcionais:$(NC)"
-	@echo "  --tokens     - Mostra tokens (análise léxica)"
-	@echo "  --ast        - Mostra AST (análise sintática)"
-	@echo "  --table      - Mostra tabela de símbolos (análise semântica)"
+	@echo "$(YELLOW)Flags Opcionais (variáveis):$(NC)"
+	@echo "  TOKENS=1     - Mostra tokens (análise léxica)"
+	@echo "  AST=1        - Mostra AST (análise sintática)"
+	@echo "  TABLE=1      - Mostra tabela de símbolos (análise semântica)"
 	@echo ""
 	@echo "$(BLUE)Exemplos:$(NC)"
 	@echo "  make test1                    $(GREEN)# Apenas executa$(NC)"
-	@echo "  make test1 --ast              $(GREEN)# Executa e mostra AST$(NC)"
-	@echo "  make test2 --tokens           $(GREEN)# Executa e mostra tokens$(NC)"
-	@echo "  make test3 --table            $(GREEN)# Executa e mostra símbolos$(NC)"
-	@echo "  make test1 --ast --tokens     $(GREEN)# Executa com AST e tokens$(NC)"
-	@echo "  make test2 --ast --table      $(GREEN)# Executa com AST e símbolos$(NC)"
+	@echo "  make test1 AST=1              $(GREEN)# Executa e mostra AST$(NC)"
+	@echo "  make test2 TOKENS=1           $(GREEN)# Executa e mostra tokens$(NC)"
+	@echo "  make test3 TABLE=1            $(GREEN)# Executa e mostra símbolos$(NC)"
+	@echo "  make test1 AST=1 TOKENS=1     $(GREEN)# Executa com AST e tokens$(NC)"
+	@echo "  make test2 AST=1 TABLE=1      $(GREEN)# Executa com AST e símbolos$(NC)"
 	@echo ""
 	@echo "$(YELLOW)Outros:$(NC)"
 	@echo "  clean        - Remove arquivos temporários"
