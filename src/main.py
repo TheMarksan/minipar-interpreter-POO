@@ -1,5 +1,6 @@
 import sys
 import os
+import json
 from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(__file__))
@@ -8,6 +9,7 @@ from lexer.Lexer import Lexer
 from parser.Parser import Parser
 from runtime.Interpreter import Interpreter
 from utils.ast_printer import print_ast
+import semantic.SemanticAnalyzer as Sa
 
 
 def print_tokens(tokens):
@@ -47,6 +49,21 @@ def main():
         
         parser = Parser(tokens)
         ast = parser.parse()
+        analyzer = Sa.SemanticAnalyzer()
+        print("testeeeeee")
+        errors = analyzer.analyze(ast)
+        print("testeeeee")
+        string_json = json.dumps(ast, default=lambda o: o.__dict__, indent=4)
+        #print(errors)
+        print(string_json)
+
+        if errors:
+            print("❌ ERROS ENCONTRADOS:")
+            for error in errors:
+                print(f"  - {error}")
+                print(f"\nTotal: {len(errors)} erro(s)")
+        else:
+            print("✅ Nenhum erro semântico encontrado!")
         
         if show_ast_flag:
             print("=" * 50)
