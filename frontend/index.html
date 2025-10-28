@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Interpretador Online — Front-end</title>
+  <link rel="stylesheet" href="./home.css">
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="title">
+        <div class="logo">IC</div>
+        <div>
+          <h1>Interpretador Online — Front-end</h1>
+          <p class="lead">Cole código no editor (ou use o exemplo). Veja Lexing &amp; Análise Semântica abaixo.</p>
+        </div>
+      </div>
+      <div class="meta">Feito para integrar com seu backend de compilador • <span class="kbd">CTRL+ENTER</span> para executar</div>
+    </header>
+
+    <section class="card editor">
+      <div class="toolbar">
+        <button class="btn primary" id="runBtn">▶  Executar</button>
+        <button class="btn" id="clearBtn">Limpar</button>
+        <button class="btn ghost" id="sampleBtn">Exemplo</button>
+        <div style="flex:1"></div>
+        <label class="meta">Tema:</label>
+        <select id="themeSel" class="btn" style="padding:6px 10px">
+          <option value="dark">Escuro</option>
+          <option value="light">Claro</option>
+        </select>
+      </div>
+
+      <div class="split">
+        <div class="codewrap">
+          <div class="gutter" id="gutter">1</div>
+          <textarea id="code" class="code" spellcheck="false" placeholder="Escreva seu código aqui..." aria-label="Editor de código" autofocus></textarea>
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div class="meta">Editor simples com números de linha fictícios</div>
+          <div class="meta">Saída: <span id="status" class="ok">Pronto</span></div>
+        </div>
+      </div>
+    </section>
+
+    <aside class="right">
+      <div class="panel">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <strong>Interpretação LÉXICA</strong>
+          <div class="meta">Tokens detectados: <span id="tokCount">0</span></div>
+        </div>
+        <div id="lexOutput" class="output" aria-live="polite">Cole código e clique em Executar para ver os tokens.</div>
+      </div>
+
+      <div class="panel">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <strong>Análise SEMÂNTICA</strong>
+          <div class="meta">Mensagens e avisos</div>
+        </div>
+        <div id="semOutput" class="output">Nenhuma verificação executada.</div>
+      </div>
+      <div class="panel">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <strong>Árvore Sintática (AST)</strong>
+          <div class="meta">Representação da estrutura do código</div>
+        </div>
+        <div id="astOutput" class="output">AST ainda não gerada.</div>
+      </div>
+
+      <div class="panel" style="display:flex;gap:8px;align-items:center;justify-content:space-between">
+        <div class="meta">Sugestões: integrar com seu backend via POST /interpret</div>
+        <button class="btn" id="exportBtn">Copiar tokens</button>
+      </div>
+    </aside>
+
+    <footer>Sugestões: 1) Conectar os botões a APIs REST do seu compilador; 2) Usar um editor real (Monaco) para highlight; 3) Mostrar AST gráfica.</footer>
+  </div>
+
+  <script src="./home.js"></script>
+</body>
+</html>
