@@ -72,7 +72,31 @@ class SemanticAnalyzer:
             elif self.is_class_declaration(child):
                 class_name = getattr(child, 'name', getattr(child, 'identifier', None))
                 if class_name:
-                    self.classes[class_name] = child  # Armazena no dicionário local
+                    # Extrai informações da classe
+                    superclass = getattr(child, 'parent', None)
+                    
+                    # Extrai atributos
+                    attributes = []
+                    attr_list = getattr(child, 'attributes', [])
+                    for attr in attr_list:
+                        attr_name = getattr(attr, 'name', None)
+                        if attr_name:
+                            attributes.append(attr_name)
+                    
+                    # Extrai métodos
+                    methods = []
+                    method_list = getattr(child, 'methods', [])
+                    for method in method_list:
+                        method_name = getattr(method, 'name', None)
+                        if method_name:
+                            methods.append(method_name)
+                    
+                    self.classes[class_name] = {
+                        'node': child,
+                        'superclass': superclass,
+                        'attributes': attributes,
+                        'methods': methods
+                    }
                     print(f"✓ Classe declarada: {class_name}")
 
     def analyze_children(self, children):
@@ -457,7 +481,8 @@ class SemanticAnalyzer:
     def is_valid_type(self, type_name: str) -> bool:
         """Verifica se um tipo é válido"""
         valid_types = ["INT", "FLOAT", "STRING", "BOOL", "VOID", "C_CHANNEL"]
-        return type_name in valid_types
+        # Também aceita tipos de classes declaradas
+        return type_name in valid_types or type_name in self.classes
 
     def are_types_compatible(self, type1: str, type2: str) -> bool:
         """Verifica se dois tipos são compatíveis"""
