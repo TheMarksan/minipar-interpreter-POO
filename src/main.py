@@ -49,21 +49,15 @@ def main():
         
         parser = Parser(tokens)
         ast = parser.parse()
-        analyzer = Sa.SemanticAnalyzer()
-        print("testeeeeee")
-        errors = analyzer.analyze(ast)
-        print("testeeeee")
-        string_json = json.dumps(ast, default=lambda o: o.__dict__, indent=4)
-        #print(errors)
-        print(string_json)
-
-        if errors:
-            print("❌ ERROS ENCONTRADOS:")
-            for error in errors:
-                print(f"  - {error}")
-                print(f"\nTotal: {len(errors)} erro(s)")
-        else:
-            print("✅ Nenhum erro semântico encontrado!")
+        # analyzer = Sa.SemanticAnalyzer()
+        # errors = analyzer.analyze(ast)
+        # if errors:
+        #     print("❌ ERROS ENCONTRADOS:")
+        #     for error in errors:
+        #         print(f"  - {error}")
+        #     print(f"\nTotal: {len(errors)} erro(s)")
+        # else:
+        #     print("✅ Nenhum erro semântico encontrado!")
         
         if show_ast_flag:
             print("=" * 50)

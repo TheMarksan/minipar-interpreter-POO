@@ -1,0 +1,299 @@
+FLOAT exp_approx(FLOAT x) {
+    FLOAT result;
+    FLOAT term;
+    INT i;
+    
+    result = 1.0;
+    term = 1.0;
+    
+    for i = 1; i <= 10; i = i + 1 {
+        term = term * x / i;
+        result = result + term;
+    }
+    
+    return result;
+}
+
+FLOAT sigmoid(FLOAT x) {
+    FLOAT exp_neg_x;
+    
+    if x > 10.0 {
+        return 1.0;
+    }
+    if x < -10.0 {
+        return 0.0;
+    }
+    
+    exp_neg_x = exp_approx(0.0 - x);
+    return 1.0 / (1.0 + exp_neg_x);
+}
+
+FLOAT sigmoid_derivative(FLOAT x) {
+    return x * (1.0 - x);
+}
+
+FLOAT random_weight(FLOAT seed) {
+    FLOAT result;
+    FLOAT m;
+    
+    m = 65536.0;
+    result = seed * 7919.0 + 1531.0;
+    
+    while result >= m {
+        result = result - m;
+    }
+    
+    while result < 0.0 {
+        result = result + m;
+    }
+    
+    return result / m;
+}
+
+CLASS Neuronio {
+    FLOAT pesos[10];
+    INT num_pesos;
+    FLOAT bias;
+    FLOAT saida;
+    
+    VOID init(INT num_inputs, FLOAT seed_base) {
+        INT i;
+        FLOAT seed;
+        
+        this.num_pesos = num_inputs;
+        this.saida = 0.0;
+        
+        for i = 0; i < num_inputs; i = i + 1 {
+            seed = seed_base + 13.0 * i;
+            this.pesos[i] = random_weight(seed);
+        }
+        
+        this.bias = random_weight(seed_base + 999.0);
+    }
+    
+    FLOAT feedforward(FLOAT in0, FLOAT in1, FLOAT in2, INT n) {
+        FLOAT soma;
+        
+        soma = this.bias;
+        
+        if n >= 1 {
+            soma = soma + this.pesos[0] * in0;
+        }
+        if n >= 2 {
+            soma = soma + this.pesos[1] * in1;
+        }
+        if n >= 3 {
+            soma = soma + this.pesos[2] * in2;
+        }
+        
+        this.saida = sigmoid(soma);
+        return this.saida;
+    }
+    
+    FLOAT calcular_derivada() {
+        return sigmoid_derivative(this.saida);
+    }
+    
+    FLOAT get_peso(INT index) {
+        return this.pesos[index];
+    }
+    
+    VOID set_peso(INT index, FLOAT valor) {
+        this.pesos[index] = valor;
+    }
+    
+    FLOAT get_bias() {
+        return this.bias;
+    }
+    
+    VOID set_bias(FLOAT valor) {
+        this.bias = valor;
+    }
+    
+    FLOAT get_saida() {
+        return this.saida;
+    }
+}
+
+CLASS RedeNeural {
+    Neuronio camada_oculta[3];
+    Neuronio neuronio_saida[1];
+    FLOAT taxa_aprendizado;
+    
+    VOID init(FLOAT taxa) {
+        INT i;
+        
+        this.taxa_aprendizado = taxa;
+        
+        
+        for i = 0; i < 3; i = i + 1 {
+            this.camada_oculta[i] = new Neuronio();
+            this.camada_oculta[i].init(2, 1000.0 + 100.0 * i);
+        }
+        
+        
+        this.neuronio_saida[0] = new Neuronio();
+        
+        
+        this.neuronio_saida[0].init(3, 5000.0);
+        
+    }
+    
+    FLOAT feedforward_get_saida(FLOAT in0, FLOAT in1) {
+        FLOAT s0;
+        FLOAT s1;
+        FLOAT s2;
+        FLOAT resultado;
+        
+        s0 = this.camada_oculta[0].feedforward(in0, in1, 0.0, 2);
+        s1 = this.camada_oculta[1].feedforward(in0, in1, 0.0, 2);
+        s2 = this.camada_oculta[2].feedforward(in0, in1, 0.0, 2);
+        
+        resultado = this.neuronio_saida[0].feedforward(s0, s1, s2, 3);
+        
+        return resultado;
+    }
+    
+    VOID backpropagation(FLOAT in0, FLOAT in1, FLOAT saida_desejada) {
+        FLOAT s0;
+        FLOAT s1;
+        FLOAT s2;
+        FLOAT saida_final;
+        FLOAT erro;
+        FLOAT delta_saida;
+        FLOAT peso_saida_0;
+        FLOAT peso_saida_1;
+        FLOAT peso_saida_2;
+        FLOAT bias_saida;
+        FLOAT delta_oculto_0;
+        FLOAT delta_oculto_1;
+        FLOAT delta_oculto_2;
+        FLOAT peso_0_0;
+        FLOAT peso_0_1;
+        FLOAT peso_1_0;
+        FLOAT peso_1_1;
+        FLOAT peso_2_0;
+        FLOAT peso_2_1;
+        FLOAT bias_0;
+        FLOAT bias_1;
+        FLOAT bias_2;
+        
+        s0 = this.camada_oculta[0].feedforward(in0, in1, 0.0, 2);
+        s1 = this.camada_oculta[1].feedforward(in0, in1, 0.0, 2);
+        s2 = this.camada_oculta[2].feedforward(in0, in1, 0.0, 2);
+        
+        saida_final = this.neuronio_saida[0].feedforward(s0, s1, s2, 3);
+        
+        erro = saida_desejada - saida_final;
+        delta_saida = erro * this.neuronio_saida[0].calcular_derivada();
+        
+        peso_saida_0 = this.neuronio_saida[0].get_peso(0);
+        peso_saida_1 = this.neuronio_saida[0].get_peso(1);
+        peso_saida_2 = this.neuronio_saida[0].get_peso(2);
+        bias_saida = this.neuronio_saida[0].get_bias();
+        
+        delta_oculto_0 = delta_saida * peso_saida_0 * this.camada_oculta[0].calcular_derivada();
+        delta_oculto_1 = delta_saida * peso_saida_1 * this.camada_oculta[1].calcular_derivada();
+        delta_oculto_2 = delta_saida * peso_saida_2 * this.camada_oculta[2].calcular_derivada();
+        
+        peso_saida_0 = peso_saida_0 + s0 * delta_saida * this.taxa_aprendizado;
+        peso_saida_1 = peso_saida_1 + s1 * delta_saida * this.taxa_aprendizado;
+        peso_saida_2 = peso_saida_2 + s2 * delta_saida * this.taxa_aprendizado;
+        bias_saida = bias_saida + delta_saida * this.taxa_aprendizado;
+        
+        this.neuronio_saida[0].set_peso(0, peso_saida_0);
+        this.neuronio_saida[0].set_peso(1, peso_saida_1);
+        this.neuronio_saida[0].set_peso(2, peso_saida_2);
+        this.neuronio_saida[0].set_bias(bias_saida);
+        
+        peso_0_0 = this.camada_oculta[0].get_peso(0);
+        peso_0_1 = this.camada_oculta[0].get_peso(1);
+        bias_0 = this.camada_oculta[0].get_bias();
+        
+        peso_0_0 = peso_0_0 + in0 * delta_oculto_0 * this.taxa_aprendizado;
+        peso_0_1 = peso_0_1 + in1 * delta_oculto_0 * this.taxa_aprendizado;
+        bias_0 = bias_0 + delta_oculto_0 * this.taxa_aprendizado;
+        
+        this.camada_oculta[0].set_peso(0, peso_0_0);
+        this.camada_oculta[0].set_peso(1, peso_0_1);
+        this.camada_oculta[0].set_bias(bias_0);
+        
+        peso_1_0 = this.camada_oculta[1].get_peso(0);
+        peso_1_1 = this.camada_oculta[1].get_peso(1);
+        bias_1 = this.camada_oculta[1].get_bias();
+        
+        peso_1_0 = peso_1_0 + in0 * delta_oculto_1 * this.taxa_aprendizado;
+        peso_1_1 = peso_1_1 + in1 * delta_oculto_1 * this.taxa_aprendizado;
+        bias_1 = bias_1 + delta_oculto_1 * this.taxa_aprendizado;
+        
+        this.camada_oculta[1].set_peso(0, peso_1_0);
+        this.camada_oculta[1].set_peso(1, peso_1_1);
+        this.camada_oculta[1].set_bias(bias_1);
+        
+        peso_2_0 = this.camada_oculta[2].get_peso(0);
+        peso_2_1 = this.camada_oculta[2].get_peso(1);
+        bias_2 = this.camada_oculta[2].get_bias();
+        
+        peso_2_0 = peso_2_0 + in0 * delta_oculto_2 * this.taxa_aprendizado;
+        peso_2_1 = peso_2_1 + in1 * delta_oculto_2 * this.taxa_aprendizado;
+        bias_2 = bias_2 + delta_oculto_2 * this.taxa_aprendizado;
+        
+        this.camada_oculta[2].set_peso(0, peso_2_0);
+        this.camada_oculta[2].set_peso(1, peso_2_1);
+        this.camada_oculta[2].set_bias(bias_2);
+    }
+    
+    VOID treinar(FLOAT in0_0, FLOAT in0_1, FLOAT out0,
+                 FLOAT in1_0, FLOAT in1_1, FLOAT out1,
+                 FLOAT in2_0, FLOAT in2_1, FLOAT out2,
+                 FLOAT in3_0, FLOAT in3_1, FLOAT out3,
+                 INT epocas) {
+        INT epoca;
+        
+        for epoca = 0; epoca < epocas; epoca = epoca + 1 {
+            this.backpropagation(in0_0, in0_1, out0);
+            this.backpropagation(in1_0, in1_1, out1);
+            this.backpropagation(in2_0, in2_1, out2);
+            this.backpropagation(in3_0, in3_1, out3);
+        }
+    }
+    
+    VOID testar(FLOAT in0, FLOAT in1) {
+        FLOAT resultado;
+        
+        resultado = this.feedforward_get_saida(in0, in1);
+        
+        print("Input: [");
+        print(in0);
+        print(", ");
+        print(in1);
+        print("], Output: ");
+        print(resultado);
+        print("\n");
+    }
+}
+
+SEQ {
+    RedeNeural rede[1];
+    
+    print("Iniciando rede neural XOR\n");
+    
+    rede[0] = new RedeNeural();
+    rede[0].init(0.2);
+    
+    print("Treinando com 10000 epocas...\n");
+    
+    rede[0].treinar(0.0, 0.0, 0.0,
+                    0.0, 1.0, 1.0,
+                    1.0, 0.0, 1.0,
+                    1.0, 1.0, 0.0,
+                    10000);
+    
+    print("Resultados apos treinamento:\n");
+    
+    rede[0].testar(0.0, 0.0);
+    rede[0].testar(0.0, 1.0);
+    rede[0].testar(1.0, 0.0);
+    rede[0].testar(1.0, 1.0);
+}
+

@@ -28,30 +28,30 @@ class Neuronio {
     }
 
     VOID treinar() {
-        print("Entrada: " + this.input_val + " | Saida desejada: " + this.output_desejado);
+        print("Entrada: " + this.input_val + " | Saida desejada: " + this.output_desejado + "\n");
         while this.erro != 0 {
             this.iteracao = this.iteracao + 1;
-            print("#### Iteracao: " + this.iteracao);
-            print("Peso: " + this.peso);
+            print("#### Iteracao: " + this.iteracao + "\n");
+            print("Peso: " + this.peso + "\n");
 
             FLOAT soma;
             INT saida;
             soma = this.input_val * this.peso + this.bias * this.peso_bias;
             saida = ativacao(soma);
-            print("Saida: " + saida);
+            print("Saida: " + saida + "\n");
 
             this.erro = this.output_desejado - saida;
-            print("Erro: " + this.erro);
+            print("Erro: " + this.erro + "\n");
 
             if this.erro != 0 {
                 this.peso = this.peso + this.taxa_aprendizado * this.input_val * this.erro;
                 this.peso_bias = this.peso_bias + this.taxa_aprendizado * this.bias * this.erro;
             }
 
-            print("Peso do bias: " + this.peso_bias);
+            print("Peso do bias: " + this.peso_bias + "\n");
         }
-        print("Parabens! O neuronio aprendeu.");
-        print("Valor desejado: " + this.output_desejado);
+        print("Parabens! O neuronio aprendeu.\n");
+        print("Valor desejado: " + this.output_desejado + "\n");
     }
 }
 

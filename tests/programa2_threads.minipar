@@ -1,7 +1,7 @@
 C_CHANNEL canal_resultados;
 
 INT input_int(STRING mensagem) {
-    print(mensagem);
+    print(mensagem + "\n");
     INT valor;
     valor = 5;
     return valor;
@@ -25,7 +25,7 @@ VOID thread_fatorial() {
     
     canal_resultados.send(fatorial);
     
-    print("Thread Fatorial finalizada.");
+    print("Thread Fatorial finalizada.\n");
 }
 
 VOID thread_fibonacci() {
@@ -44,7 +44,7 @@ VOID thread_fibonacci() {
         a = b;
         b = temp;
     }
-    print("Thread Fibonacci finalizada.");
+    print("Thread Fibonacci finalizada.\n");
 }
 
 PAR {
@@ -56,11 +56,11 @@ SEQ {
     INT recebido;
     INT i;
     
-    print("Recebendo resultados:");
+    print("Recebendo resultados:\n");
     for i = 0; i < 6; i = i + 1 {
         canal_resultados.receive(recebido);
-        print("Valor recebido do canal: " + recebido);
+        print("Valor recebido do canal: " + recebido + "\n");
     }
 
-    print("Execucao paralela finalizada.");
+    print("Execucao paralela finalizada.\n");
 }

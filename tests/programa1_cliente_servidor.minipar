@@ -12,20 +12,20 @@ VOID computador_1() {
     FLOAT valor2;
     FLOAT resultado;
 
-    PRINT("========================================");
-    PRINT("  CALCULADORA CLIENTE-SERVIDOR");
-    PRINT("========================================");
-    PRINT("");
-    PRINT("Computador 1 (Cliente) - Iniciando...");
-    PRINT("");
+    PRINT("========================================\n");
+    PRINT("  CALCULADORA CLIENTE-SERVIDOR\n");
+    PRINT("========================================\n");
+    PRINT("\n");
+    PRINT("Computador 1 (Cliente) - Iniciando...\n");
+    PRINT("\n");
     
     # Apresentar opções da calculadora
-    PRINT("Operações disponíveis:");
-    PRINT("  + : Adição");
-    PRINT("  - : Subtração");
-    PRINT("  * : Multiplicação");
-    PRINT("  / : Divisão");
-    PRINT("");
+    PRINT("Operações disponíveis:\n");
+    PRINT("  + : Adição\n");
+    PRINT("  - : Subtração\n");
+    PRINT("  * : Multiplicação\n");
+    PRINT("  / : Divisão\n");
+    PRINT("\n");
     
     # Ler dados do usuário (pode usar INPUT() ou valores fixos para teste)
     # Para teste rápido, descomente as linhas abaixo:
@@ -41,28 +41,28 @@ VOID computador_1() {
     # PRINT("Digite o segundo valor: ");
     # valor2 = INPUT();
     
-    PRINT("");
-    PRINT("Cliente enviando para servidor...");
-    PRINT("  Operação: " + operacao);
-    PRINT("  Valor 1: " + valor1);
-    PRINT("  Valor 2: " + valor2);
+    PRINT("\n");
+    PRINT("Cliente enviando para servidor...\n");
+    PRINT("  Operação: " + operacao + "\n");
+    PRINT("  Valor 1: " + valor1 + "\n");
+    PRINT("  Valor 2: " + valor2 + "\n");
     
     # Enviar dados para o servidor via canal request
     request.SEND(operacao, valor1, valor2);
     
     # Aguardar resultado do servidor via canal response
-    PRINT("");
-    PRINT("Aguardando cálculo do servidor...");
+    PRINT("\n");
+    PRINT("Aguardando cálculo do servidor...\n");
     response.RECEIVE(resultado);
     
     # Apresentar resultado
-    PRINT("");
-    PRINT("========================================");
-    PRINT("  RESULTADO DO SERVIDOR");
-    PRINT("========================================");
-    PRINT("Operação: " + valor1 + " " + operacao + " " + valor2);
-    PRINT("Resultado: " + resultado);
-    PRINT("========================================");
+    PRINT("\n");
+    PRINT("========================================\n");
+    PRINT("  RESULTADO DO SERVIDOR\n");
+    PRINT("========================================\n");
+    PRINT("Operação: " + valor1 + " " + operacao + " " + valor2 + "\n");
+    PRINT("Resultado: " + resultado + "\n");
+    PRINT("========================================\n");
 }
 
 
@@ -72,51 +72,51 @@ VOID computador_2() {
     FLOAT valor2;
     FLOAT resultado;
     
-    PRINT("");
-    PRINT("Computador 2 (Servidor) - Aguardando requisição...");
-    PRINT("");
+    PRINT("\n");
+    PRINT("Computador 2 (Servidor) - Aguardando requisição...\n");
+    PRINT("\n");
     
     # Receber dados do cliente via canal request
     request.RECEIVE(operacao, valor1, valor2);
     
-    PRINT("Servidor recebeu requisição:");
-    PRINT("  Operação: " + operacao);
-    PRINT("  Valor 1: " + valor1);
-    PRINT("  Valor 2: " + valor2);
-    PRINT("");
+    PRINT("Servidor recebeu requisição:\n");
+    PRINT("  Operação: " + operacao + "\n");
+    PRINT("  Valor 1: " + valor1 + "\n");
+    PRINT("  Valor 2: " + valor2 + "\n");
+    PRINT("\n");
     
     # Executar cálculo conforme operação solicitada
-    PRINT("Servidor processando cálculo...");
+    PRINT("Servidor processando cálculo...\n");
     
     if operacao == "+" {
         resultado = valor1 + valor2;
-        PRINT("Cálculo: " + valor1 + " + " + valor2 + " = " + resultado);
+        PRINT("Cálculo: " + valor1 + " + " + valor2 + " = " + resultado + "\n");
     } else if operacao == "-" {
         resultado = valor1 - valor2;
-        PRINT("Cálculo: " + valor1 + " - " + valor2 + " = " + resultado);
+        PRINT("Cálculo: " + valor1 + " - " + valor2 + " = " + resultado + "\n");
     } else if operacao == "*" {
         resultado = valor1 * valor2;
-        PRINT("Cálculo: " + valor1 + " * " + valor2 + " = " + resultado);
+        PRINT("Cálculo: " + valor1 + " * " + valor2 + " = " + resultado + "\n");
     } else if operacao == "/" {
         if valor2 != 0 {
             resultado = valor1 / valor2;
-            PRINT("Cálculo: " + valor1 + " / " + valor2 + " = " + resultado);
+            PRINT("Cálculo: " + valor1 + " / " + valor2 + " = " + resultado + "\n");
         } else {
-            PRINT("ERRO: Divisão por zero!");
+            PRINT("ERRO: Divisão por zero!\n");
             resultado = 0;
         }
     } else {
-        PRINT("ERRO: Operação inválida!");
+        PRINT("ERRO: Operação inválida!\n");
         resultado = 0;
     }
     
-    PRINT("");
-    PRINT("Servidor enviando resultado para cliente...");
+    PRINT("\n");
+    PRINT("Servidor enviando resultado para cliente...\n");
     
     # Enviar resultado para o cliente via canal response
     response.SEND(resultado);
     
-    PRINT("Servidor: Operação concluída.");
+    PRINT("Servidor: Operação concluída.\n");
 }
 
 
@@ -128,6 +128,6 @@ PAR {
     computador_2();
 }
 
-PRINT("");
-PRINT("Cliente-Servidor: Comunicação concluída com sucesso!");
-PRINT("");
+PRINT("\n");
+PRINT("Cliente-Servidor: Comunicação concluída com sucesso!\n");
+PRINT("\n");

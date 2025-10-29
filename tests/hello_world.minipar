@@ -2,7 +2,7 @@ void funcao1(){
     int i;
     i = 0;
     while i != 5 {
-        print("THREAD A: " + i);
+        print("THREAD A: " + i + "\n");
         i = i + 1;
     }
 }
@@ -11,7 +11,7 @@ void funcao2(){
     int j;
     j = 5;
     while j != 0 {
-        print("THREAD B: " + j);
+        print("THREAD B: " + j + "\n");
         j = j - 1;
     }
 }

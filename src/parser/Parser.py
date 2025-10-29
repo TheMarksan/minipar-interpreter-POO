@@ -87,12 +87,22 @@ class Parser:
                         program.children.append(self.parse_function())
                     else:
                         program.children.append(self.parse_declaration())
+                elif self.peek().type == TokenType.LPAREN:
+                    program.children.append(self.parse_statement())
+                elif self.peek().type == TokenType.ASSIGN:
+                    program.children.append(self.parse_statement())
+                elif self.peek().type == TokenType.DOT:
+                    program.children.append(self.parse_statement())
+                elif self.peek().type == TokenType.LBRACKET:
+                    program.children.append(self.parse_statement())
                 else:
                     break
             elif self.match(TokenType.C_CHANNEL):
                 program.children.append(self.parse_declaration())
             elif self.match(TokenType.SEQ, TokenType.PAR):
                 program.children.append(self.parse_block())
+            elif self.match(TokenType.PRINT):
+                program.children.append(self.parse_statement())
             elif self.match(TokenType.COMMENT):
                 self.advance()
             else:
@@ -330,9 +340,19 @@ class Parser:
             if self.match(TokenType.RBRACE):
                 break
             
+            # Guardar posição atual para detectar loop infinito
+            old_pos = self.pos
+            
             stmt = self.parse_statement()
             if stmt:
                 statements.append(stmt)
+            
+            # Se não avançou, há um problema - avançar manualmente para evitar loop infinito
+            if self.pos == old_pos and not self.match(TokenType.RBRACE, TokenType.EOF):
+                token = self.current_token()
+                print(f"AVISO: Token não processado na linha {token.line}: {token.type.name if hasattr(token.type, 'name') else token.type} = '{token.lexeme}'")
+                self.advance()  # Força avanço
+            
             self.skip_comments()
         
         return statements
@@ -358,7 +378,16 @@ class Parser:
                 self.expect(TokenType.DOT)
                 attr_name = self.expect(TokenType.IDENT).lexeme
                 
-                # Verificar se é acesso a array (this.attr[index])
+                # Criar AttributeAccessNode inicial
+                attr_access = AttributeAccessNode(obj_name, attr_name)
+                
+                # Suporte a acesso encadeado: this.obj.attr ou this.obj.arr[i]
+                while self.match(TokenType.DOT):
+                    self.advance()
+                    next_attr = self.expect(TokenType.IDENT).lexeme
+                    attr_access = AttributeAccessNode(attr_access, next_attr)
+                
+                # Verificar se é acesso a array (this.attr[index] ou this.obj.arr[index])
                 if self.match(TokenType.LBRACKET):
                     self.advance()
                     index = self.parse_expression()
@@ -377,33 +406,38 @@ class Parser:
                         member_name = self.expect(TokenType.IDENT).lexeme
                         
                         if self.match(TokenType.LPAREN):
-                            # Chamada de método: this.produtos[i].metodo()
+                            # Chamada de método: this.produtos[i].metodo() ou this.obj.arr[i].metodo()
                             self.advance()
                             args = self.parse_arguments()
                             self.expect(TokenType.RPAREN)
                             if self.match(TokenType.SEMICOLON):
                                 self.advance()
-                            # Criar AttributeAccessNode para this.produtos, depois ArrayAccessNode, depois método
-                            attr_access = AttributeAccessNode(obj_name, attr_name)
+                            # Usar attr_access já construído
                             array_access = ArrayAccessWithObjectNode(attr_access, index, index2)
                             return ArrayElementMethodCallNode(array_access, member_name, args)
                         elif self.match(TokenType.ASSIGN):
-                            # Atribuição: this.produtos[i].nome = valor
+                            # Atribuição: this.produtos[i].nome = valor ou this.obj.arr[i].nome = valor
                             self.advance()
                             expression = self.parse_expression()
                             if self.match(TokenType.SEMICOLON):
                                 self.advance()
-                            attr_access = AttributeAccessNode(obj_name, attr_name)
                             array_access = ArrayAccessWithObjectNode(attr_access, index, index2)
                             return ArrayElementAttributeAssignmentNode(array_access, member_name, expression)
                     elif self.match(TokenType.ASSIGN):
-                        # Atribuição simples a elemento do array: this.produtos[i] = valor
+                        # Atribuição simples a elemento do array: this.produtos[i] = valor ou this.obj.arr[i] = valor
                         self.advance()
                         expression = self.parse_expression()
                         if self.match(TokenType.SEMICOLON):
                             self.advance()
-                        # Criar node especial para atribuição de array em atributo de objeto
-                        return ObjectAttributeArrayAssignmentNode(obj_name, attr_name, index, expression, index2)
+                        # Para compatibilidade com ObjectAttributeArrayAssignmentNode, 
+                        # extrair object_name e attr_name do attr_access final
+                        if isinstance(attr_access, AttributeAccessNode):
+                            # Se attr_access é encadeado, precisamos usar o nó completo
+                            # mas ObjectAttributeArrayAssignmentNode espera strings
+                            # Vamos mudar para usar ArrayAccessWithObjectNode + AttributeAssignmentNode
+                            array_access = ArrayAccessWithObjectNode(attr_access, index, index2)
+                            # Retornar uma atribuição ao elemento do array
+                            return ObjectAttributeArrayAssignmentNode(obj_name, attr_name, index, expression, index2)
                 elif self.match(TokenType.ASSIGN):
                     self.advance()
                     expression = self.parse_expression()
@@ -730,11 +764,25 @@ class Parser:
             if self.match(TokenType.DOT):
                 self.advance()
                 attr_or_method = self.expect(TokenType.IDENT).lexeme
+                
+                # Criar AttributeAccessNode inicial
+                result = AttributeAccessNode(name, attr_or_method)
+                
+                # Suporte a acesso encadeado: this.obj.attr ou this.obj.method()
+                while self.match(TokenType.DOT):
+                    self.advance()
+                    next_attr = self.expect(TokenType.IDENT).lexeme
+                    # Encadear: result se torna o objeto base para o próximo acesso
+                    result = AttributeAccessNode(result, next_attr)
+                
+                # Verificar se é chamada de método no final da cadeia
                 if self.match(TokenType.LPAREN):
                     self.advance()
                     args = self.parse_arguments()
                     self.expect(TokenType.RPAREN)
-                    return MethodCallNode(name, attr_or_method, args)
+                    # Converter último AttributeAccessNode para MethodCallNode
+                    if isinstance(result, AttributeAccessNode):
+                        return MethodCallNode(result.object_name, result.attribute_name, args)
                 elif self.match(TokenType.LBRACKET):
                     # this.attribute[index] - atributo é array
                     self.advance()
@@ -753,24 +801,25 @@ class Parser:
                         self.advance()
                         member_name = self.expect(TokenType.IDENT).lexeme
                         if self.match(TokenType.LPAREN):
-                            # this.array[i].metodo()
+                            # this.array[i].metodo() ou this.obj.array[i].metodo()
                             self.advance()
                             args = self.parse_arguments()
                             self.expect(TokenType.RPAREN)
-                            attr_access = AttributeAccessNode(name, attr_or_method)
-                            array_access = ArrayAccessWithObjectNode(attr_access, index, index2)
+                            # Usar result (cadeia completa) ao invés de reconstruir
+                            array_access = ArrayAccessWithObjectNode(result, index, index2)
                             return ArrayElementMethodCallNode(array_access, member_name, args)
                         else:
-                            # this.array[i].attribute
-                            attr_access = AttributeAccessNode(name, attr_or_method)
-                            array_access = ArrayAccessWithObjectNode(attr_access, index, index2)
+                            # this.array[i].attribute ou this.obj.array[i].attribute
+                            # Usar result (cadeia completa) ao invés de reconstruir
+                            array_access = ArrayAccessWithObjectNode(result, index, index2)
                             return ArrayElementAttributeAccessNode(array_access, member_name)
                     else:
-                        # this.array[i]
-                        attr_access = AttributeAccessNode(name, attr_or_method)
-                        return ArrayAccessWithObjectNode(attr_access, index, index2)
+                        # this.array[i] ou this.obj.arr[i]
+                        # Usar result (cadeia completa)
+                        return ArrayAccessWithObjectNode(result, index, index2)
                 else:
-                    return AttributeAccessNode(name, attr_or_method)
+                    # Retornar o resultado (pode ser encadeado)
+                    return result
             return IdentifierNode(name)
         elif self.match(TokenType.IDENT):
             name = self.advance().lexeme
@@ -811,11 +860,23 @@ class Parser:
             elif self.match(TokenType.DOT):
                 self.advance()
                 attr_or_method = self.expect(TokenType.IDENT).lexeme
+                
+                # Criar AttributeAccessNode inicial
+                result = AttributeAccessNode(name, attr_or_method)
+                
+                # Suporte a acesso encadeado: obj.obj2.attr
+                while self.match(TokenType.DOT):
+                    self.advance()
+                    next_attr = self.expect(TokenType.IDENT).lexeme
+                    result = AttributeAccessNode(result, next_attr)
+                
+                # Verificar se é chamada de método no final da cadeia
                 if self.match(TokenType.LPAREN):
                     self.advance()
                     args = self.parse_arguments()
                     self.expect(TokenType.RPAREN)
-                    return MethodCallNode(name, attr_or_method, args)
+                    if isinstance(result, AttributeAccessNode):
+                        return MethodCallNode(result.object_name, result.attribute_name, args)
                 elif self.match(TokenType.LBRACKET):
                     # object.attribute[index] - atributo é array
                     self.advance()
@@ -851,7 +912,8 @@ class Parser:
                         attr_access = AttributeAccessNode(name, attr_or_method)
                         return ArrayAccessWithObjectNode(attr_access, index, index2)
                 else:
-                    return AttributeAccessNode(name, attr_or_method)
+                    # Retornar o resultado (pode ser encadeado)
+                    return result
             return IdentifierNode(name)
         elif self.match(TokenType.LPAREN):
             self.advance()

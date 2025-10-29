@@ -8,12 +8,13 @@ class SemanticAnalyzer:
         self.current_function: Optional[str] = None
         self.return_type_stack: List[str] = []
         self.functions = {}  # Dicionário adicional para armazenar funções
+        self.classes = {}    # Dicionário adicional para armazenar classes
 
     def analyze(self, ast) -> List[str]:
         """Analisa a árvore AST (objeto) e retorna uma lista de erros semânticos"""
-        print("=== INICIANDO ANÁLISE SEMÂNTICA ===")
         self.errors = []
         self.functions = {}
+        self.classes = {}
 
         try:
             # Primeira passada: coletar declarações globais
@@ -27,13 +28,8 @@ class SemanticAnalyzer:
             else:
                 self.analyze_node(ast)
 
-            print("✅ Análise semântica concluída!")
-
         except Exception as e:
             self.errors.append(f"Erro durante análise: {str(e)}")
-            print(f"Erro durante análise: {e}")
-            import traceback
-            traceback.print_exc()
 
         return self.errors
 
@@ -71,6 +67,13 @@ class SemanticAnalyzer:
                 if func_name:
                     self.functions[func_name] = child  # Armazena no dicionário local
                     print(f"✓ Função declarada: {func_name}")
+            
+            # Declarações de classes
+            elif self.is_class_declaration(child):
+                class_name = getattr(child, 'name', getattr(child, 'identifier', None))
+                if class_name:
+                    self.classes[class_name] = child  # Armazena no dicionário local
+                    print(f"✓ Classe declarada: {class_name}")
 
     def analyze_children(self, children):
         """Analisa uma lista de children da AST"""
@@ -111,6 +114,12 @@ class SemanticAnalyzer:
         return (hasattr(node, 'return_type') and
                 (hasattr(node, 'name') or hasattr(node, 'identifier')) and
                 (hasattr(node, 'body') or hasattr(node, 'children')))
+    
+    def is_class_declaration(self, node) -> bool:
+        """Verifica se é uma declaração de classe"""
+        return (hasattr(node, 'name') and 
+                hasattr(node, 'attributes') and 
+                hasattr(node, 'methods'))
 
     def is_assignment(self, node) -> bool:
         """Verifica se é uma atribuição"""

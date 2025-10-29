@@ -44,8 +44,8 @@ class Quicksort {
 }
 
 VOID main() {
-    print("==== Ordenacao com Quicksort ====");
-    print("Insira os elementos do vetor separados por espaco:");
+    print("==== Ordenacao com Quicksort ====\n");
+    print("Insira os elementos do vetor separados por espaco:\n");
     
     STRING entrada;
     entrada = input();
@@ -81,7 +81,7 @@ VOID main() {
     tamanho_global = count;
     
     if tamanho_global == 0 {
-        print("Nenhum numero encontrado!");
+        print("Nenhum numero encontrado!\n");
     } else {
         STRING vetor_original;
         STRING vetor_ordenado;
@@ -96,7 +96,8 @@ VOID main() {
             vetor_original = vetor_original + "]";
         }
         
-        print("Vetor original: " + vetor_original);
+        print("Vetor original: " + vetor_original + "\n");
+        print("\n");
         
         Quicksort sorter;
         sorter = new Quicksort();
@@ -112,7 +113,8 @@ VOID main() {
             vetor_ordenado = vetor_ordenado + "]";
         }
         
-        print("Vetor ordenado: " + vetor_ordenado);
+        print("Vetor ordenado: " + vetor_ordenado + "\n");
+        print("\n");
     }
 }
 

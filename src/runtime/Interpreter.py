@@ -45,14 +45,33 @@ class ObjectInstance:
                     dim1 = int(dim1.value)
                 if isinstance(dim2, NumberNode):
                     dim2 = int(dim2.value)
-                # Create 2D array
-                self.attributes[attr.name] = [[None for _ in range(int(dim2))] for _ in range(int(dim1))]
+                # Inicializar com valor padrão baseado no tipo
+                if attr.type_name.upper() == "INT":
+                    self.attributes[attr.name] = [[0 for _ in range(int(dim2))] for _ in range(int(dim1))]
+                elif attr.type_name.upper() == "FLOAT":
+                    self.attributes[attr.name] = [[0.0 for _ in range(int(dim2))] for _ in range(int(dim1))]
+                elif attr.type_name.upper() == "STRING":
+                    self.attributes[attr.name] = [["" for _ in range(int(dim2))] for _ in range(int(dim1))]
+                elif attr.type_name.upper() == "BOOL":
+                    self.attributes[attr.name] = [[False for _ in range(int(dim2))] for _ in range(int(dim1))]
+                else:
+                    self.attributes[attr.name] = [[None for _ in range(int(dim2))] for _ in range(int(dim1))]
             elif hasattr(attr, 'is_array') and attr.is_array and hasattr(attr, 'array_size') and attr.array_size:
                 # 1D array
                 size = attr.array_size
                 if isinstance(size, NumberNode):
                     size = int(size.value)
-                self.attributes[attr.name] = [None] * int(size)
+                # Inicializar com valor padrão baseado no tipo
+                if attr.type_name.upper() == "INT":
+                    self.attributes[attr.name] = [0] * int(size)
+                elif attr.type_name.upper() == "FLOAT":
+                    self.attributes[attr.name] = [0.0] * int(size)
+                elif attr.type_name.upper() == "STRING":
+                    self.attributes[attr.name] = [""] * int(size)
+                elif attr.type_name.upper() == "BOOL":
+                    self.attributes[attr.name] = [False] * int(size)
+                else:
+                    self.attributes[attr.name] = [None] * int(size)
             else:
                 self.attributes[attr.name] = None
     
@@ -249,7 +268,7 @@ class Interpreter:
         elif node.is_2d_array and node.array_dimensions:
             # Array bidimensional
             rows = self.evaluate_expression(node.array_dimensions[0])
-            cols = self.evaluate_expression(node.array_dimensions[1]) if node.array_dimensions[1] else 0
+            cols = self.evaluate_expression(node.array_dimensions[1]) if len(node.array_dimensions) > 1 and node.array_dimensions[1] is not None else 0
             
             if node.initial_value:
                 if isinstance(node.initial_value, BraceInitNode):
@@ -271,8 +290,17 @@ class Interpreter:
                     init_val = self.evaluate_expression(node.initial_value)
                     value = [[init_val for _ in range(int(cols))] for _ in range(int(rows))]
             else:
-                # Array vazio
-                value = [[None for _ in range(int(cols))] for _ in range(int(rows))]
+                # Array sem inicialização - inicializar com 0 baseado no tipo
+                if node.type_name.upper() == "INT":
+                    value = [[0 for _ in range(int(cols))] for _ in range(int(rows))]
+                elif node.type_name.upper() == "FLOAT":
+                    value = [[0.0 for _ in range(int(cols))] for _ in range(int(rows))]
+                elif node.type_name.upper() == "STRING":
+                    value = [["" for _ in range(int(cols))] for _ in range(int(rows))]
+                elif node.type_name.upper() == "BOOL":
+                    value = [[False for _ in range(int(cols))] for _ in range(int(rows))]
+                else:
+                    value = [[None for _ in range(int(cols))] for _ in range(int(rows))]
         elif node.is_array:
             # Array unidimensional
             if node.initial_value:
@@ -284,7 +312,17 @@ class Interpreter:
                     value = self.evaluate_expression(node.initial_value)
             elif node.array_size:
                 size = self.evaluate_expression(node.array_size)
-                value = [None] * int(size)
+                # Inicializar com 0 (INT/FLOAT) ou "" (STRING) ao invés de None
+                if node.type_name.upper() == "INT":
+                    value = [0] * int(size)
+                elif node.type_name.upper() == "FLOAT":
+                    value = [0.0] * int(size)
+                elif node.type_name.upper() == "STRING":
+                    value = [""] * int(size)
+                elif node.type_name.upper() == "BOOL":
+                    value = [False] * int(size)
+                else:
+                    value = [None] * int(size)
             else:
                 value = []
         elif node.initial_value:
@@ -356,7 +394,9 @@ class Interpreter:
     
     def execute_print(self, node):
         value = self.evaluate_expression(node.expression)
-        print(value)
+        if isinstance(value, str):
+            value = value.replace('\\n', '\n').replace('\\t', '\t')
+        print(value, end='')
     
     def execute_input(self, node):
         prompt = ""
@@ -465,7 +505,12 @@ class Interpreter:
         return None
     
     def execute_method_call(self, node):
-        obj = self.get_variable(node.object_name)
+        # object_name pode ser uma string ou AttributeAccessNode (this.usuario)
+        if isinstance(node.object_name, str):
+            obj = self.get_variable(node.object_name)
+        else:
+            # É um AttributeAccessNode, avaliar recursivamente
+            obj = self.evaluate_expression(node.object_name)
         
         if isinstance(obj, ObjectInstance):
             method = obj.get_method(node.method_name)
@@ -578,13 +623,34 @@ class Interpreter:
         return None
     
     def evaluate_attribute_access(self, node):
-        obj = self.get_variable(node.object_name)
+        # Suporte a acesso encadeado: this.obj1.obj2.attr
+        from parser.AST import AttributeAccessNode
+        
+        if isinstance(node.object_name, AttributeAccessNode):
+            # Acesso encadeado: primeiro resolve o objeto intermediário
+            obj = self.evaluate_attribute_access(node.object_name)
+        elif isinstance(node.object_name, str):
+            # Acesso simples: busca variável pelo nome
+            obj = self.get_variable(node.object_name)
+        else:
+            # node.object_name pode ser outro tipo de nó
+            obj = self.evaluate_expression(node.object_name)
+        
         if isinstance(obj, ObjectInstance):
             return obj.get_attribute(node.attribute_name)
         return None
     
     def evaluate_array_access(self, node):
-        array = self.get_variable(node.array_name)
+        from parser.AST import AttributeAccessNode
+        
+        # array_name pode ser string ou AttributeAccessNode (this.array)
+        if isinstance(node.array_name, str):
+            array = self.get_variable(node.array_name)
+        elif isinstance(node.array_name, AttributeAccessNode):
+            array = self.evaluate_attribute_access(node.array_name)
+        else:
+            array = self.evaluate_expression(node.array_name)
+        
         if isinstance(array, list):
             if node.index2 is not None:
                 # Array bidimensional
@@ -731,8 +797,9 @@ class Interpreter:
                     array[int(index)] = value
     
     def evaluate_array_access_with_object(self, node):
-        # this.produtos[i] - primeiro pega this.produtos, depois indexa
+        # this.produtos[i] ou this.obj.arr[i] - acesso encadeado suportado
         if isinstance(node.object_attr_access, AttributeAccessNode):
+            # Avaliar completamente a cadeia de atributos até chegar no array
             array = self.evaluate_attribute_access(node.object_attr_access)
             
             if isinstance(array, list):
