@@ -49,6 +49,268 @@ p.lead{margin:0;color:var(--muted);font-size:13px}
 /* Garante que textarea não force o layout e seja scrollável dentro do container */
 .codewrap .code{min-width:0;max-height:100%;overflow:auto;display:block}
 
+/* AST Tree Visualization */
+.ast-tree {
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 12px;
+  overflow-x: auto;
+}
+
+.ast-node-wrapper {
+  position: relative;
+  padding-left: 24px;
+  margin: 4px 0;
+}
+
+.ast-node {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 6px;
+  margin: 2px 0;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.02);
+  transition: all 0.2s ease;
+  cursor: default;
+}
+
+.ast-node:hover {
+  background: rgba(255,255,255,0.05);
+  transform: translateX(2px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.ast-node-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ast-node-label {
+  font-weight: 600;
+  color: var(--accent-2);
+}
+
+.ast-node-details {
+  font-size: 10px;
+  color: var(--muted);
+  font-style: italic;
+}
+
+/* Tipos de nós com cores diferentes */
+.ast-node.node-root {
+  background: linear-gradient(135deg, rgba(124,92,255,0.2), rgba(0,212,255,0.2));
+  border-color: var(--accent);
+}
+
+.ast-node.node-root .ast-node-label {
+  color: #fff;
+  font-size: 14px;
+}
+
+.ast-node.node-block {
+  background: rgba(0,212,255,0.1);
+  border-color: var(--accent-2);
+}
+
+.ast-node.node-block .ast-node-label {
+  color: var(--accent-2);
+}
+
+.ast-node.node-class {
+  background: rgba(255,121,198,0.1);
+  border-color: #ff79c6;
+}
+
+.ast-node.node-class .ast-node-label {
+  color: #ff79c6;
+}
+
+.ast-node.node-function {
+  background: rgba(139,233,253,0.1);
+  border-color: #8be9fd;
+}
+
+.ast-node.node-function .ast-node-label {
+  color: #8be9fd;
+}
+
+.ast-node.node-declaration {
+  background: rgba(189,147,249,0.1);
+  border-color: #bd93f9;
+}
+
+.ast-node.node-declaration .ast-node-label {
+  color: #bd93f9;
+}
+
+.ast-node.node-control {
+  background: rgba(255,184,108,0.1);
+  border-color: #ffb86c;
+}
+
+.ast-node.node-control .ast-node-label {
+  color: #ffb86c;
+}
+
+.ast-node.node-io {
+  background: rgba(241,250,140,0.1);
+  border-color: #f1fa8c;
+}
+
+.ast-node.node-io .ast-node-label {
+  color: #f1fa8c;
+}
+
+.ast-node.node-assignment {
+  background: rgba(80,250,123,0.1);
+  border-color: var(--success);
+}
+
+.ast-node.node-assignment .ast-node-label {
+  color: var(--success);
+}
+
+/* Linha conectando pais e filhos */
+.ast-node-wrapper::before {
+  content: '';
+  position: absolute;
+  left: 8px;
+  top: 18px;
+  width: 12px;
+  height: 1px;
+  background: rgba(255,255,255,0.15);
+}
+
+.ast-node-wrapper::after {
+  content: '';
+  position: absolute;
+  left: 8px;
+  top: 0;
+  width: 1px;
+  height: 100%;
+  background: rgba(255,255,255,0.08);
+}
+
+.ast-node-wrapper:last-child::after {
+  height: 18px;
+}
+
+.ast-children {
+  margin-left: 8px;
+  border-left: 1px solid rgba(255,255,255,0.06);
+  padding-left: 4px;
+}
+
+.ast-stats {
+  margin-top: 12px;
+  padding: 8px;
+  background: rgba(255,255,255,0.02);
+  border-radius: 6px;
+  text-align: center;
+}
+
+.ast-text {
+  margin: 0;
+  padding: 12px;
+  background: rgba(0,0,0,0.2);
+  border-radius: 8px;
+  overflow-x: auto;
+}
+
+/* Symbol Table Styles */
+.symbol-table-container {
+  font-size: 13px;
+}
+
+.symbol-stats {
+  display: flex;
+  gap: 12px;
+  padding: 10px 12px;
+  background: rgba(0,0,0,0.2);
+  border-radius: 6px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.symbol-scope {
+  margin-bottom: 16px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  overflow: hidden;
+  background: rgba(255,255,255,0.02);
+}
+
+.symbol-scope-header {
+  padding: 10px 12px;
+  background: linear-gradient(90deg, rgba(124,92,255,0.15), rgba(0,212,255,0.15));
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.symbol-scope-header strong {
+  color: var(--accent-2);
+  font-size: 14px;
+}
+
+.symbol-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.symbol-table thead {
+  background: rgba(0,0,0,0.2);
+  border-bottom: 2px solid rgba(255,255,255,0.1);
+}
+
+.symbol-table th {
+  padding: 8px 12px;
+  text-align: left;
+  font-weight: 600;
+  color: var(--muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.symbol-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+
+.symbol-table tr:last-child td {
+  border-bottom: none;
+}
+
+.symbol-table tr:hover {
+  background: rgba(255,255,255,0.03);
+}
+
+.symbol-name {
+  color: var(--accent-2);
+  font-weight: 600;
+  font-family: var(--mono);
+}
+
+.symbol-type {
+  color: #ff79c6;
+  font-weight: 500;
+}
+
+.symbol-type span {
+  margin-left: 4px;
+}
+
+.symbol-details {
+  color: var(--muted);
+  font-size: 11px;
+  font-style: italic;
+}
+
 /* Previne que o conteúdo do editor expanda o layout horizontalmente
    e força scroll interno quando o conteúdo é grande */
 .codewrap{overflow:hidden;max-width:100%}

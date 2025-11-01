@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const lexOut = document.getElementById('lexOutput');
   const semOut = document.getElementById('semOutput');
   const tacOut = document.getElementById('tacOutput');
+  const symbolTableOut = document.getElementById('symbolTableOutput');
   const tokCount = document.getElementById('tokCount');
   const status = document.getElementById('status');
   const exportBtn = document.getElementById('exportBtn');
@@ -125,6 +126,114 @@ SEQ {
   }
   themeSel.addEventListener('change', (e)=>{ applyTheme(e.target.value); });
 
+  // Renderizar tabela de símbolos
+  function renderSymbolTable(symbolTableData) {
+    if (!symbolTableOut) return;
+    
+    symbolTableOut.innerHTML = '';
+    
+    if (!symbolTableData || symbolTableData.total_symbols === 0) {
+      symbolTableOut.textContent = 'Nenhum símbolo declarado.';
+      return;
+    }
+    
+    const container = document.createElement('div');
+    container.className = 'symbol-table-container';
+    
+    // Estatísticas gerais
+    const stats = document.createElement('div');
+    stats.className = 'symbol-stats';
+    stats.innerHTML = `
+      <span class="meta">Total: ${symbolTableData.total_symbols} símbolos</span>
+      <span class="meta">• ${symbolTableData.variables.length} variáveis</span>
+      <span class="meta">• ${symbolTableData.functions.length} funções</span>
+      <span class="meta">• ${symbolTableData.classes.length} classes</span>
+    `;
+    container.appendChild(stats);
+    
+    // Função auxiliar para criar seção
+    function createSection(title, items, icon) {
+      if (items.length === 0) return null;
+      
+      const section = document.createElement('div');
+      section.className = 'symbol-scope';
+      
+      const header = document.createElement('div');
+      header.className = 'symbol-scope-header';
+      header.innerHTML = `<strong>${icon} ${title}</strong> <span class="meta">(${items.length})</span>`;
+      section.appendChild(header);
+      
+      const table = document.createElement('table');
+      table.className = 'symbol-table';
+      
+      const thead = document.createElement('thead');
+      thead.innerHTML = '<tr><th>Nome</th><th>Tipo</th><th>Detalhes</th></tr>';
+      table.appendChild(thead);
+      
+      const tbody = document.createElement('tbody');
+      
+      items.forEach(symbol => {
+        const row = document.createElement('tr');
+        
+        const nameCell = document.createElement('td');
+        nameCell.className = 'symbol-name';
+        nameCell.textContent = symbol.name;
+        
+        const typeCell = document.createElement('td');
+        typeCell.className = 'symbol-type';
+        
+        let typeIcon = '📦';
+        if (symbol.is_function) typeIcon = '🔧';
+        else if (symbol.is_class) typeIcon = '🏛️';
+        else if (symbol.is_array) typeIcon = '📚';
+        else if (symbol.type === 'c_channel') typeIcon = '📡';
+        
+        typeCell.innerHTML = `${typeIcon} <span>${symbol.type}</span>`;
+        
+        const detailsCell = document.createElement('td');
+        detailsCell.className = 'symbol-details';
+        
+        const details = [];
+        if (symbol.is_array && symbol.array_size) {
+          details.push(`array[${symbol.array_size}]`);
+        }
+        if (symbol.is_function && symbol.return_type) {
+          details.push(`→ ${symbol.return_type}`);
+          if (symbol.parameters && symbol.parameters.length > 0) {
+            const params = symbol.parameters.map(p => `${p.type} ${p.name}`).join(', ');
+            details.push(`(${params})`);
+          }
+        }
+        if (symbol.value !== null && symbol.value !== 'None') {
+          details.push(`= ${symbol.value}`);
+        }
+        
+        detailsCell.textContent = details.join(' ');
+        
+        row.appendChild(nameCell);
+        row.appendChild(typeCell);
+        row.appendChild(detailsCell);
+        tbody.appendChild(row);
+      });
+      
+      table.appendChild(tbody);
+      section.appendChild(table);
+      return section;
+    }
+    
+    // Adicionar seções
+    const variablesSection = createSection('Variáveis', symbolTableData.variables, '📦');
+    if (variablesSection) container.appendChild(variablesSection);
+    
+    const functionsSection = createSection('Funções', symbolTableData.functions, '🔧');
+    if (functionsSection) container.appendChild(functionsSection);
+    
+    const classesSection = createSection('Classes', symbolTableData.classes, '🏛️');
+    if (classesSection) container.appendChild(classesSection);
+    
+    symbolTableOut.appendChild(container);
+  }
+
   // Executar -> enviar para backend
   async function interpretarCodigo(){
     const code = getEditorValue();
@@ -142,8 +251,24 @@ SEQ {
       lexOut.textContent = lexText || 'Nenhum token.';
       // semantico
       semOut.textContent = data.semantico ? (typeof data.semantico === 'string' ? data.semantico : JSON.stringify(data.semantico,null,2)) : 'Nenhuma análise semântica.';
-      // ast
-      document.getElementById('astOutput').textContent = data.ast || 'Nenhuma árvore sintática gerada.';
+      // ast - renderizar como árvore visual
+      const astOutput = document.getElementById('astOutput');
+      if (data.ast) {
+        if (window.ASTTreeRenderer) {
+          const astRenderer = new window.ASTTreeRenderer(astOutput);
+          astRenderer.render(data.ast);
+        } else {
+          astOutput.textContent = data.ast;
+        }
+      } else {
+        astOutput.textContent = 'Nenhuma árvore sintática gerada.';
+      }
+      // symbol table - renderizar tabela de símbolos
+      if (symbolTableOut && data.symbol_table) {
+        renderSymbolTable(data.symbol_table);
+      } else if (symbolTableOut) {
+        symbolTableOut.textContent = 'Tabela de símbolos não disponível.';
+      }
       // tac (código de 3 endereços) — backend pode fornecer com chaves diferentes
       if(tacOut){
         const tacText = data.tac || data.tac_code || data.threeAddress || data.three_address || data.three_address_code || '';

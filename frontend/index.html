@@ -114,6 +114,17 @@
         <div id="astOutput" class="output">AST ainda não gerada.</div>
       </div>
 
+      <div class="panel">
+        <div class="hdr">
+          <strong>Tabela de Símbolos</strong>
+          <div style="display:flex;align-items:center;gap:12px">
+            <div class="meta">Variáveis, funções e classes declaradas</div>
+            <button class="toggle" data-target="symbolTableOutput" title="Minimizar/Expandir">▾</button>
+          </div>
+        </div>
+        <div id="symbolTableOutput" class="output">Tabela de símbolos não disponível.</div>
+      </div>
+
       <div class="panel" style="display:flex;gap:8px;align-items:center;justify-content:space-between">
         <div class="meta">Sugestões: integrar com seu backend via POST /interpret</div>
         <button class="btn" id="exportBtn">Copiar tokens</button>
@@ -126,7 +137,8 @@
   <!-- Scripts CodeMirror (devem carregar antes de home.js para inicializar o editor) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/clike/clike.min.js"></script>
-  <script src="./home.js?v=2025.11.01.3"></script>
+  <script src="./ast-tree.js?v=2025.11.01.5"></script>
+  <script src="./home.js?v=2025.11.01.5"></script>
   
 </body>
 </html>

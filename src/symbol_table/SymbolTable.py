@@ -67,6 +67,7 @@ class SymbolTable:
         self.lock = threading.Lock()
         self.current_scope = self.global_scope
         self.scope_level = 0
+        self.all_symbols = []  # Lista para rastrear todos os símbolos declarados
     
     def enter_scope(self):
         self.scope_level += 1
@@ -79,12 +80,72 @@ class SymbolTable:
             self.current_scope = self.current_scope.parent
             self.scope_level -= 1
     
+    def to_dict(self):
+        """Serializa a tabela de símbolos para um dicionário JSON-serializável"""
+        def symbol_to_dict(symbol):
+            return {
+                'name': symbol.name,
+                'type': symbol.symbol_type,
+                'value': str(symbol.value) if symbol.value is not None else None,
+                'scope_level': symbol.scope_level,
+                'is_array': symbol.is_array,
+                'array_size': symbol.array_size,
+                'is_function': symbol.is_function,
+                'is_class': symbol.is_class,
+                'return_type': symbol.return_type,
+                'parameters': [{'name': p[1], 'type': p[0]} for p in symbol.parameters] if symbol.parameters else []
+            }
+        
+        # Separar símbolos por categoria
+        variables = []
+        functions = []
+        classes = []
+        types = []
+        
+        # Coletar símbolos do escopo global
+        for name, symbol in self.global_scope.symbols.items():
+            sym_dict = symbol_to_dict(symbol)
+            if symbol.symbol_type == 'type':
+                # Pular tipos built-in do sistema
+                if name.lower() not in ['int', 'float', 'string', 'bool', 'char', 'void', 'c_channel']:
+                    types.append(sym_dict)
+            elif symbol.is_function:
+                # Pular funções built-in
+                if name not in ['strlen', 'substr', 'charat', 'indexof', 'parseint', 'print', 'input']:
+                    functions.append(sym_dict)
+            elif symbol.is_class:
+                classes.append(sym_dict)
+            else:
+                variables.append(sym_dict)
+        
+        # Adicionar símbolos rastreados durante a análise
+        for symbol in self.all_symbols:
+            sym_dict = symbol_to_dict(symbol)
+            if symbol.is_function and symbol.name not in [f['name'] for f in functions]:
+                functions.append(sym_dict)
+            elif symbol.is_class and symbol.name not in [c['name'] for c in classes]:
+                classes.append(sym_dict)
+            elif not symbol.is_function and not symbol.is_class and symbol.symbol_type != 'type':
+                if symbol.name not in [v['name'] for v in variables]:
+                    variables.append(sym_dict)
+        
+        return {
+            'variables': variables,
+            'functions': functions,
+            'classes': classes,
+            'user_types': types,
+            'total_symbols': len(variables) + len(functions) + len(classes) + len(types)
+        }
+    
     def define(self, name, symbol_type, value=None, is_array=False, array_size=None):
         with self.lock:
             if self.current_scope.exists(name):
                 return self.current_scope.lookup(name)
             symbol = Symbol(name, symbol_type, value, self.scope_level, is_array, array_size)
             self.current_scope.define(name, symbol)
+            # Rastrear símbolo se não for built-in
+            if symbol_type != 'type' and name not in ['strlen', 'substr', 'charat', 'indexof', 'parseint', 'print', 'input']:
+                self.all_symbols.append(symbol)
             return symbol
     
     def define_function(self, name, return_type, parameters):
@@ -96,6 +157,9 @@ class SymbolTable:
             symbol.return_type = return_type
             symbol.parameters = parameters
             self.current_scope.define(name, symbol)
+            # Rastrear função se não for built-in
+            if name not in ['strlen', 'substr', 'charat', 'indexof', 'parseint', 'print', 'input']:
+                self.all_symbols.append(symbol)
             return symbol
     
     def define_class(self, name, attributes, methods, parent=None):
@@ -110,6 +174,7 @@ class SymbolTable:
                 'parent': parent
             }
             self.current_scope.define(name, symbol)
+            self.all_symbols.append(symbol)
             return symbol
     
     def lookup(self, name):

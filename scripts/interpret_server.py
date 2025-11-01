@@ -170,12 +170,16 @@ class SimpleHandler(BaseHTTPRequestHandler):
         try:
             sa = SemanticAnalyzer()
             sem_res = sa.analyze(ast) if ast is not None else {'success': False, 'errors': ['AST inválida']}
+            # Adicionar symbol table à resposta
+            symbol_table_data = sa.symbol_table.to_dict() if hasattr(sa, 'symbol_table') else None
         except Exception as e:
             sem_res = {'success': False, 'errors': [f'Erro semântico: {e}']}
+            symbol_table_data = None
 
         response = {
             'lexico': lex_out,
             'semantico': sem_res,
+            'symbol_table': symbol_table_data,
             'ast': ast_text
         }
 
