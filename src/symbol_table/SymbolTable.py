@@ -81,19 +81,78 @@ class SymbolTable:
             self.scope_level -= 1
     
     def to_dict(self):
-        """Serializa a tabela de símbolos para um dicionário JSON-serializável"""
+        """
+        Converte a tabela de símbolos em um dicionário serializável (JSON).
+        """
+        def safe_serialize_value(value):
+            """Safely serialize a value that might contain AST objects"""
+            if value is None:
+                return None
+            if isinstance(value, (str, int, float, bool)):
+                return value
+            # Handle class definitions specially
+            if isinstance(value, dict):
+                if 'attributes' in value and 'methods' in value:
+                    # This is a class definition, extract safe metadata
+                    return {
+                        'type': 'class_definition',
+                        'num_attributes': len(value.get('attributes', [])),
+                        'num_methods': len(value.get('methods', [])),
+                        'parent': value.get('parent')
+                    }
+                # Other dict types, recursively serialize
+                try:
+                    result = {}
+                    for k, v in value.items():
+                        result[str(k)] = safe_serialize_value(v)
+                    return result
+                except Exception as e:
+                    return f"<dict: {type(value).__name__}>"
+            # Handle lists/tuples
+            if isinstance(value, (list, tuple)):
+                try:
+                    return [safe_serialize_value(item) for item in value]
+                except Exception as e:
+                    return f"<list: {len(value)} items>"
+            # For any other complex object (AST nodes, etc), check if it has __dict__
+            try:
+                # Check if it's an AST node or similar object
+                if hasattr(value, '__class__') and hasattr(value.__class__, '__name__'):
+                    class_name = value.__class__.__name__
+                    if 'Node' in class_name or 'AST' in class_name:
+                        return f"<{class_name}>"
+            except:
+                pass
+            # Last resort: convert to string
+            try:
+                return str(value)
+            except:
+                return "<unserializable>"
+        
         def symbol_to_dict(symbol):
+            # Safely serialize parameters
+            params = []
+            if symbol.parameters:
+                for p in symbol.parameters:
+                    if isinstance(p, tuple) and len(p) >= 2:
+                        params.append({'name': str(p[1]), 'type': str(p[0])})
+                    else:
+                        params.append(safe_serialize_value(p))
+            
+            # Safely serialize array_size (can be an AST node like NumberNode)
+            array_size_safe = safe_serialize_value(symbol.array_size)
+            
             return {
                 'name': symbol.name,
                 'type': symbol.symbol_type,
-                'value': str(symbol.value) if symbol.value is not None else None,
+                'value': safe_serialize_value(symbol.value),
                 'scope_level': symbol.scope_level,
                 'is_array': symbol.is_array,
-                'array_size': symbol.array_size,
+                'array_size': array_size_safe,
                 'is_function': symbol.is_function,
                 'is_class': symbol.is_class,
                 'return_type': symbol.return_type,
-                'parameters': [{'name': p[1], 'type': p[0]} for p in symbol.parameters] if symbol.parameters else []
+                'parameters': params
             }
         
         # Separar símbolos por categoria

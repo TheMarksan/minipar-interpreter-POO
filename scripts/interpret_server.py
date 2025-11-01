@@ -287,7 +287,20 @@ class SimpleHandler(BaseHTTPRequestHandler):
             response['stdout'] = response['exec']
 
         self._set_headers(200)
-        self.wfile.write(json.dumps(response, ensure_ascii=False).encode('utf-8'))
+        try:
+            self.wfile.write(json.dumps(response, ensure_ascii=False).encode('utf-8'))
+        except TypeError as e:
+            # If JSON serialization fails, try to identify the problematic field
+            print(f"[ERROR] JSON serialization failed: {e}")
+            safe_response = {}
+            for key, value in response.items():
+                try:
+                    json.dumps({key: value})
+                    safe_response[key] = value
+                except TypeError:
+                    print(f"[ERROR] Field '{key}' contains non-serializable data")
+                    safe_response[key] = f"<error: {type(value).__name__} not serializable>"
+            self.wfile.write(json.dumps(safe_response, ensure_ascii=False).encode('utf-8'))
 
 
 def main():
