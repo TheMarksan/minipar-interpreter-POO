@@ -9,11 +9,11 @@ import os
 from pathlib import Path
 
 # ===== CONFIGURAÇÃO - AJUSTE SEU USERNAME =====
-USERNAME = 'seu_username'  # ⚠️ MUDE PARA SEU USERNAME!
+USERNAME = 'm4rksan7'  
 # ==============================================
 
 # Adicionar projeto ao path
-project_home = f'/home/{USERNAME}/minipar-interpreter'
+project_home = f'/home/{USERNAME}/minipar-interpreter-POO'
 if project_home not in sys.path:
     sys.path.insert(0, project_home)
 
