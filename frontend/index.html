@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Interpretador Online — Front-end</title>
-  <link rel="stylesheet" href="./home.css">
+  <link rel="stylesheet" href="/static/home.css">
 </head>
 <body>
   <div class="app">
@@ -53,14 +53,6 @@
         </div>
         <div id="lexOutput" class="output" aria-live="polite">Cole código e clique em Executar para ver os tokens.</div>
       </div>
-
-      <div class="panel">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-          <strong>Análise SEMÂNTICA</strong>
-          <div class="meta">Mensagens e avisos</div>
-        </div>
-        <div id="semOutput" class="output">Nenhuma verificação executada.</div>
-      </div>
       <div class="panel">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
           <strong>Árvore Sintática (AST)</strong>
@@ -68,6 +60,14 @@
         </div>
         <div id="astOutput" class="output">AST ainda não gerada.</div>
       </div>
+      <div class="panel">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <strong>Análise SEMÂNTICA</strong>
+          <div class="meta">Mensagens e avisos</div>
+        </div>
+        <div id="semOutput" class="output">Nenhuma verificação executada.</div>
+      </div>
+
 
       <div class="panel" style="display:flex;gap:8px;align-items:center;justify-content:space-between">
         <div class="meta">Sugestões: integrar com seu backend via POST /interpret</div>
@@ -75,9 +75,9 @@
       </div>
     </aside>
 
-    <footer>Sugestões: 1) Conectar os botões a APIs REST do seu compilador; 2) Usar um editor real (Monaco) para highlight; 3) Mostrar AST gráfica.</footer>
+    
   </div>
 
-  <script src="./home.js"></script>
+  <script src="/static/home.js"></script>
 </body>
 </html>
