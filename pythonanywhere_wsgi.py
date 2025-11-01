@@ -1,239 +1,169 @@
 """
-WSGI Configuration for PythonAnywhere
-Copie este conteúdo para o arquivo WSGI no PythonAnywhere
-Caminho: /var/www/yourusername_pythonanywhere_com_wsgi.py
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                  WSGI Configuration for PythonAnywhere                       ║
+║                      MiniPar Interpreter - v2.0                              ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+INSTRUÇÕES:
+1. No PythonAnywhere, vá em Web > WSGI configuration file
+2. APAGUE todo o conteúdo do arquivo
+3. COLE este arquivo COMPLETO
+4. Clique em SAVE
+5. Clique em RELOAD m4rksan7.pythonanywhere.com
+
 """
 
 import sys
 import os
-from pathlib import Path
 
-# ===== CONFIGURAÇÃO - AJUSTE SEU USERNAME =====
-USERNAME = 'm4rksan7'  
-# ==============================================
+# ============================================================================
+# CONFIGURAÇÃO DO CAMINHO
+# ============================================================================
 
-# Adicionar projeto ao path
-project_home = f'/home/{USERNAME}/minipar-interpreter-POO'
-if project_home not in sys.path:
-    sys.path.insert(0, project_home)
+# Username do PythonAnywhere
+USERNAME = 'm4rksan7'
 
-# Adicionar src ao path
-sys.path.insert(0, os.path.join(project_home, 'src'))
+# Caminho completo do projeto
+project_path = f'/home/{USERNAME}/minipar-interpreter-POO'
 
-# Ativar virtualenv
-venv_path = os.path.join(project_home, 'venv')
-activate_this = os.path.join(venv_path, 'bin', 'activate_this.py')
+# ============================================================================
+# DEBUG - Verificações Iniciais
+# ============================================================================
 
-# Criar activate_this.py se não existir (compatibilidade)
-if not os.path.exists(activate_this):
-    # Usar método alternativo de ativação
-    import site
-    site.addsitedir(os.path.join(venv_path, 'lib', 'python3.10', 'site-packages'))
+print("=" * 70)
+print("🔍 MINIPAR INTERPRETER - WSGI INITIALIZATION")
+print("=" * 70)
+print(f"📂 Project path: {project_path}")
+print(f"✅ Path exists: {os.path.exists(project_path)}")
 
-# Imports do projeto
-from http.server import SimpleHTTPRequestHandler, HTTPServer
-from urllib.parse import urlparse, parse_qs
-import json
-import io
-from contextlib import redirect_stdout
+# Verificar arquivo server_pythonanywhere.py
+server_file = os.path.join(project_path, 'server_pythonanywhere.py')
+print(f"📄 server_pythonanywhere.py exists: {os.path.exists(server_file)}")
 
-# Importar módulos do interpreter
-from lexer.Lexer import Lexer
-from parser.Parser import Parser
-from semantic.SemanticAnalyzer import SemanticAnalyzer
-from runtime.Interpreter import Interpreter
+# Adicionar ao sys.path
+if project_path not in sys.path:
+    sys.path.insert(0, project_path)
+    print(f"✅ Added to sys.path")
+
+# Adicionar src ao path (para imports internos)
+src_path = os.path.join(project_path, 'src')
+if src_path not in sys.path:
+    sys.path.insert(0, src_path)
+    print(f"✅ Added src to sys.path")
+
+# ============================================================================
+# IMPORTAR A APLICAÇÃO FLASK
+# ============================================================================
+
+# Verificar Flask
+try:
+    import flask
+    print(f"✅ Flask version: {flask.__version__}")
+except ImportError:
+    print("❌ Flask not installed! Run: pip3 install --user flask flask-cors")
+    raise
 
 try:
-    from codegen.TACGenerator import TACGenerator
-    TAC_AVAILABLE = True
+    import flask_cors
+    print(f"✅ Flask-CORS installed")
 except ImportError:
-    TAC_AVAILABLE = False
+    print("⚠️  Flask-CORS not installed (optional)")
 
+# Importar a aplicação
+try:
+    print("⏳ Importing server_pythonanywhere...")
+    from server_pythonanywhere import app as application
+    print("✅ SUCCESS! MiniPar Interpreter loaded!")
+    print("=" * 70)
+    
+except ImportError as e:
+    print(f"❌ IMPORT ERROR: {e}")
+    print(f"   File exists: {os.path.exists(server_file)}")
+    print(f"   sys.path: {sys.path[:3]}")
+    print("=" * 70)
+    
+    # Criar aplicação de erro para debug
+    from flask import Flask
+    application = Flask(__name__)
+    
+    @application.route('/')
+    def error_page():
+        return f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>MiniPar - Erro de Configuração</title>
+            <style>
+                body {{ font-family: Arial, sans-serif; margin: 40px; background: #f5f5f5; }}
+                .error {{ background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }}
+                h1 {{ color: #e74c3c; }}
+                code {{ background: #f0f0f0; padding: 2px 6px; border-radius: 3px; }}
+                pre {{ background: #2c3e50; color: #ecf0f1; padding: 15px; border-radius: 5px; overflow-x: auto; }}
+                .check {{ color: #27ae60; }}
+                .cross {{ color: #e74c3c; }}
+            </style>
+        </head>
+        <body>
+            <div class="error">
+                <h1>❌ Erro ao Carregar MiniPar Interpreter</h1>
+                
+                <h2>Erro Encontrado:</h2>
+                <pre>{str(e)}</pre>
+                
+                <h2>📋 Checklist de Verificação:</h2>
+                <ul>
+                    <li><span class="{'check' if os.path.exists(project_path) else 'cross'}">
+                        {'✅' if os.path.exists(project_path) else '❌'}
+                    </span> Projeto existe em: <code>{project_path}</code></li>
+                    
+                    <li><span class="{'check' if os.path.exists(server_file) else 'cross'}">
+                        {'✅' if os.path.exists(server_file) else '❌'}
+                    </span> Arquivo <code>server_pythonanywhere.py</code> existe</li>
+                    
+                    <li>Flask instalado? Execute: <code>pip3 install --user flask flask-cors</code></li>
+                </ul>
+                
+                <h2>🔧 Como Resolver:</h2>
+                <ol>
+                    <li><strong>No Bash Console do PythonAnywhere:</strong></li>
+                    <pre>cd ~/minipar-interpreter-POO
+pip3 install --user flask flask-cors
+ls -la server_pythonanywhere.py</pre>
+                    
+                    <li><strong>Se o arquivo não existir:</strong></li>
+                    <pre>git pull origin main</pre>
+                    
+                    <li><strong>Depois recarregue:</strong> Web > Reload m4rksan7.pythonanywhere.com</li>
+                </ol>
+                
+                <h2>📊 Informações de Debug:</h2>
+                <pre>Project Path: {project_path}
+Server File: {server_file}
+File Exists: {os.path.exists(server_file)}
+Python Version: {sys.version}
+sys.path (first 3): {sys.path[:3]}</pre>
+                
+                <hr>
+                <p><small>Error.log: <code>/var/log/m4rksan7.pythonanywhere.com.error.log</code></small></p>
+            </div>
+        </body>
+        </html>
+        """
+    
+    @application.route('/health')
+    def health():
+        return {{'status': 'error', 'message': str(e)}}
 
-class WSGIHandler:
-    """Handler WSGI para PythonAnywhere"""
-    
-    def __init__(self):
-        self.frontend_dir = os.path.join(project_home, 'frontend')
-    
-    def serve_static(self, path):
-        """Servir arquivo estático"""
-        if path == '/':
-            path = '/index.html'
-        
-        file_path = os.path.join(self.frontend_dir, path.lstrip('/'))
-        
-        if not os.path.exists(file_path):
-            return ('404 Not Found', [('Content-Type', 'text/plain')], b'Not Found')
-        
-        # Detectar tipo de conteúdo
-        content_types = {
-            '.html': 'text/html',
-            '.css': 'text/css',
-            '.js': 'application/javascript',
-            '.json': 'application/json',
-            '.png': 'image/png',
-            '.jpg': 'image/jpeg',
-            '.svg': 'image/svg+xml',
-        }
-        
-        ext = os.path.splitext(file_path)[1]
-        content_type = content_types.get(ext, 'application/octet-stream')
-        
-        with open(file_path, 'rb') as f:
-            content = f.read()
-        
-        return ('200 OK', [('Content-Type', content_type)], content)
-    
-    def handle_interpret(self, body):
-        """Processar requisição de interpretação"""
-        try:
-            data = json.loads(body)
-            code = data.get('code', '')
-            
-            # Lexer
-            lexer = Lexer(code)
-            tokens = list(lexer.tokenize())
-            
-            # Parser
-            parser = Parser(tokens)
-            ast = parser.parse()
-            
-            # Semantic Analysis
-            analyzer = SemanticAnalyzer()
-            semantic_result = analyzer.analyze(ast)
-            
-            if not semantic_result['success']:
-                return {
-                    'erro': '\n'.join(semantic_result['errors']),
-                    'semantico': semantic_result,
-                    'success': False
-                }
-            
-            # Interpreter - Capturar stdout
-            interpreter = Interpreter()
-            output_buffer = io.StringIO()
-            
-            try:
-                with redirect_stdout(output_buffer):
-                    interpreter.interpret(ast)
-                output = output_buffer.getvalue()
-            except Exception as e:
-                output = f"[Erro na execução]: {e}"
-            finally:
-                output_buffer.close()
-            
-            # Serializar tokens
-            tokens_list = []
-            for tok in tokens:
-                tokens_list.append({
-                    'type': tok.type.name if hasattr(tok.type, 'name') else str(tok.type),
-                    'value': tok.lexeme,
-                    'line': tok.line,
-                    'column': tok.column
-                })
-            
-            # Symbol table
-            symbol_table_data = analyzer.symbol_table.to_dict() if hasattr(analyzer, 'symbol_table') else {}
-            
-            # TAC
-            tac_text = ''
-            if TAC_AVAILABLE and ast:
-                try:
-                    tac_gen = TACGenerator()
-                    tac_gen.generate(ast)
-                    tac_text = tac_gen.to_string()
-                except Exception as e:
-                    tac_text = f'Erro ao gerar TAC: {str(e)}'
-            
-            # AST serialization
-            def ast_to_dict(node):
-                if node is None:
-                    return None
-                result = {'type': node.__class__.__name__}
-                for key, value in node.__dict__.items():
-                    if isinstance(value, list):
-                        result[key] = [ast_to_dict(item) for item in value]
-                    elif hasattr(value, '__dict__') and not isinstance(value, (str, int, float, bool)):
-                        result[key] = ast_to_dict(value)
-                    else:
-                        result[key] = value
-                return result
-            
-            return {
-                'success': True,
-                'saida': output,
-                'lexico': tokens_list,
-                'semantico': semantic_result,
-                'ast': ast_to_dict(ast) if ast else None,
-                'symbol_table': symbol_table_data,
-                'tac': tac_text,
-            }
-            
-        except Exception as e:
-            return {
-                'erro': f'Erro interno: {str(e)}',
-                'success': False
-            }
+except Exception as e:
+    print(f"❌ UNEXPECTED ERROR: {e}")
+    import traceback
+    traceback.print_exc()
+    print("=" * 70)
+    raise
 
-
-def application(environ, start_response):
-    """WSGI application entry point"""
-    
-    handler = WSGIHandler()
-    path = environ.get('PATH_INFO', '/')
-    method = environ.get('REQUEST_METHOD', 'GET')
-    
-    # CORS headers
-    cors_headers = [
-        ('Access-Control-Allow-Origin', '*'),
-        ('Access-Control-Allow-Methods', 'GET, POST, OPTIONS'),
-        ('Access-Control-Allow-Headers', 'Content-Type'),
-    ]
-    
-    # OPTIONS (preflight)
-    if method == 'OPTIONS':
-        start_response('200 OK', cors_headers)
-        return [b'']
-    
-    # POST /interpretar
-    if method == 'POST' and path == '/interpretar':
-        try:
-            content_length = int(environ.get('CONTENT_LENGTH', 0))
-            body = environ['wsgi.input'].read(content_length).decode('utf-8')
-            
-            result = handler.handle_interpret(body)
-            response_body = json.dumps(result, ensure_ascii=False).encode('utf-8')
-            
-            headers = cors_headers + [
-                ('Content-Type', 'application/json'),
-                ('Content-Length', str(len(response_body)))
-            ]
-            
-            start_response('200 OK', headers)
-            return [response_body]
-            
-        except Exception as e:
-            error_response = json.dumps({
-                'erro': f'Erro ao processar requisição: {str(e)}',
-                'success': False
-            }).encode('utf-8')
-            
-            headers = cors_headers + [
-                ('Content-Type', 'application/json'),
-                ('Content-Length', str(len(error_response)))
-            ]
-            
-            start_response('500 Internal Server Error', headers)
-            return [error_response]
-    
-    # GET - Servir arquivos estáticos
-    if method == 'GET':
-        status, headers, content = handler.serve_static(path)
-        headers = headers + cors_headers
-        start_response(status, headers)
-        return [content]
-    
-    # 404
-    start_response('404 Not Found', cors_headers + [('Content-Type', 'text/plain')])
-    return [b'Not Found']
+# ============================================================================
+# FIM DO WSGI
+# ============================================================================
+# O PythonAnywhere usa automaticamente a variável 'application'
+# Não adicione mais código abaixo!
+# ============================================================================
