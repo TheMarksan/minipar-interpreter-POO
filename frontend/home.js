@@ -13,7 +13,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const status = document.getElementById('status');
   const exportBtn = document.getElementById('exportBtn');
   const themeSel = document.getElementById('themeSel');
+  const astViewToggle = document.getElementById('astViewToggle');
   let currentRunId = null;
+  
+  // AST view mode state (persistente no localStorage)
+  let astViewMode = localStorage.getItem('astViewMode') || 'tree'; // 'tree' ou 'text'
+  let currentAstData = null; // Armazena os dados da AST atual
 
   function getEditorValue(){ return (window.editorInstance && window.editorInstance.getValue) ? window.editorInstance.getValue() : codeEl.value }
   function setEditorValue(v){ if(window.editorInstance && window.editorInstance.setValue) window.editorInstance.setValue(v); else codeEl.value = v }
@@ -461,6 +466,82 @@ SEQ {
   }
   themeSel.addEventListener('change', (e)=>{ applyTheme(e.target.value); });
 
+  // Renderizar AST (tree ou text mode)
+  function renderAST(astData, mode = null) {
+    const astOutput = document.getElementById('astOutput');
+    if (!astOutput) return;
+    
+    if (!astData) {
+      astOutput.textContent = 'Nenhuma árvore sintática gerada.';
+      return;
+    }
+    
+    // Usar o modo especificado ou o modo atual
+    const viewMode = mode || astViewMode;
+    
+    // Armazenar dados atuais para permitir toggle
+    currentAstData = astData;
+    
+    if (!window.ASTTreeRenderer) {
+      // Fallback: mostrar como JSON
+      astOutput.textContent = typeof astData === 'string' ? astData : JSON.stringify(astData, null, 2);
+      return;
+    }
+    
+    const astRenderer = new window.ASTTreeRenderer(astOutput);
+    
+    if (viewMode === 'text') {
+      // Renderizar como texto formatado com highlighting
+      const textData = typeof astData === 'string' ? astData : JSON.stringify(astData, null, 2);
+      astRenderer.renderTextAST(textData);
+    } else {
+      // Renderizar como árvore visual (padrão)
+      astRenderer.render(astData);
+    }
+    
+    // Atualizar o botão toggle
+    updateASTToggleButton(viewMode);
+  }
+  
+  // Atualizar visual do botão toggle
+  function updateASTToggleButton(mode) {
+    if (!astViewToggle) return;
+    
+    const icon = astViewToggle.querySelector('.view-icon');
+    const label = astViewToggle.querySelector('.view-label');
+    
+    if (mode === 'text') {
+      astViewToggle.setAttribute('data-mode', 'text');
+      icon.textContent = '📝';
+      label.textContent = 'Texto';
+      astViewToggle.title = 'Clique para ver como árvore visual';
+    } else {
+      astViewToggle.setAttribute('data-mode', 'tree');
+      icon.textContent = '📊';
+      label.textContent = 'Árvore';
+      astViewToggle.title = 'Clique para ver como texto formatado';
+    }
+  }
+  
+  // Toggle AST view mode
+  if (astViewToggle) {
+    // Inicializar visual do botão
+    updateASTToggleButton(astViewMode);
+    
+    astViewToggle.addEventListener('click', () => {
+      // Alternar modo
+      astViewMode = astViewMode === 'tree' ? 'text' : 'tree';
+      
+      // Salvar preferência
+      localStorage.setItem('astViewMode', astViewMode);
+      
+      // Re-renderizar AST com novo modo
+      if (currentAstData) {
+        renderAST(currentAstData, astViewMode);
+      }
+    });
+  }
+
   // Renderizar tabela de símbolos
   function renderSymbolTable(symbolTableData) {
     if (!symbolTableOut) return;
@@ -607,58 +688,139 @@ SEQ {
     symbolTableOut.appendChild(container);
   }
 
-  // Executar -> enviar para backend
+  // ===== WebSocket Setup =====
+  let wsClient = null;
+  const wsStatusEl = document.getElementById('wsStatus');
+  const wsTextEl = wsStatusEl ? wsStatusEl.querySelector('.ws-text') : null;
+  
+  function updateWSStatus(status, text) {
+    if (!wsStatusEl || !wsTextEl) return;
+    wsStatusEl.className = 'ws-status ' + status;
+    wsTextEl.textContent = text;
+  }
+  
+  // Inicializar WebSocket Client
+  if (window.MiniParWebSocketClient) {
+    wsClient = new window.MiniParWebSocketClient('ws://localhost:8001');
+    
+    // Handlers de eventos
+    wsClient.onMessage((data) => {
+      if (data.status === 'processing') {
+        updateWSStatus('executing', 'Processando...');
+      } else if (data.status === 'executing') {
+        updateWSStatus('executing', 'Executando...');
+      } else if (data.success !== undefined) {
+        // Resultado final
+        updateWSStatus('connected', 'Conectado');
+        processInterpretResult(data);
+      }
+    });
+    
+    wsClient.onStatus((status, message) => {
+      if (status === 'connected') {
+        updateWSStatus('connected', 'Conectado');
+      } else if (status === 'disconnected') {
+        updateWSStatus('disconnected', 'Desconectado');
+      } else if (status === 'reconnecting') {
+        updateWSStatus('connecting', 'Reconectando...');
+      }
+    });
+    
+    wsClient.onError((error) => {
+      console.error('WebSocket error:', error);
+      updateWSStatus('disconnected', 'Erro de conexão');
+    });
+    
+    // Conectar
+    wsClient.connect().then(() => {
+      updateWSStatus('connected', 'Conectado');
+    }).catch(() => {
+      updateWSStatus('disconnected', 'Desconectado');
+    });
+  }
+  
+  // Função auxiliar para processar resultado (usada tanto por WS quanto REST)
+  function processInterpretResult(data) {
+    if(data.erro){ 
+      execOut.textContent=''; 
+      lexOut.textContent='❌ '+data.erro; 
+      semOut.textContent=''; 
+      return; 
+    }
+    
+    // tokens
+    let lexText = '';
+    if(Array.isArray(data.lexico)){
+      lexText = data.lexico.map(t => (typeof t === 'string' ? t : (t.type||t.t||'') + ' ' + (t.lexeme||t.v||t.value||''))).join('\n');
+    } else if(typeof data.lexico === 'string') lexText = data.lexico;
+    lexOut.textContent = lexText || 'Nenhum token.';
+    
+    // semantico
+    semOut.textContent = data.semantico ? (typeof data.semantico === 'string' ? data.semantico : JSON.stringify(data.semantico,null,2)) : 'Nenhuma análise semântica.';
+    
+    // ast - renderizar com suporte a toggle tree/text
+    renderAST(data.ast);
+    
+    // symbol table
+    if (symbolTableOut && data.symbol_table) {
+      renderSymbolTable(data.symbol_table);
+    } else if (symbolTableOut) {
+      symbolTableOut.textContent = 'Tabela de símbolos não disponível.';
+    }
+    
+    // tac
+    if(tacOut){
+      const tacText = data.tac || data.tac_code || data.threeAddress || data.three_address || data.three_address_code || '';
+      tacOut.textContent = tacText ? (typeof tacText === 'string' ? tacText : JSON.stringify(tacText,null,2)) : 'TAC não fornecido pelo backend.';
+    }
+    
+    // exec
+    const execText = data.saida || data.exec || data.execucao || data.stdout || data.output || '';
+    execOut.textContent = (typeof execText === 'string' ? execText : JSON.stringify(execText,null,2)) || '(Nenhuma saída de execução fornecida pelo backend)';
+    
+    // input interativo
+    if(data.waiting_for_input){
+      currentRunId = data.run_id || data.runId || null;
+      showInputPrompt(currentRunId, data.prompt || '');
+    } else {
+      removeInputPrompt();
+      currentRunId = null;
+    }
+  }
+
+  // Executar -> enviar para backend (usa WebSocket se disponível, senão REST)
   async function interpretarCodigo(){
     const code = getEditorValue();
     execOut.textContent = '🔄 Executando...';
-    lexOut.textContent = '🔄 Processando...'; semOut.textContent = '🔄 Processando...';
+    lexOut.textContent = '🔄 Processando...'; 
+    semOut.textContent = '🔄 Processando...';
+    document.getElementById('astOutput').textContent = '🔄 Gerando árvore...';
+    if (symbolTableOut) symbolTableOut.textContent = '🔄 Processando...';
+    
+    // Tentar usar WebSocket primeiro
+    if (wsClient && wsClient.isConnected()) {
+      try {
+        updateWSStatus('executing', 'Executando...');
+        wsClient.send(code);
+        // Resultado será processado pelo handler onMessage
+        return;
+      } catch (err) {
+        console.error('WebSocket error, falling back to REST:', err);
+      }
+    }
+    
+    // Fallback para REST API
     try{
       const resp = await fetch('http://127.0.0.1:8000/interpretar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code})});
       const data = await resp.json();
-      if(data.erro){ execOut.textContent=''; lexOut.textContent='❌ '+data.erro; semOut.textContent=''; return; }
-      // tokens
-      let lexText = '';
-      if(Array.isArray(data.lexico)){
-        lexText = data.lexico.map(t => (typeof t === 'string' ? t : (t.type||t.t||'') + ' ' + (t.lexeme||t.v||t.value||''))).join('\n');
-      } else if(typeof data.lexico === 'string') lexText = data.lexico;
-      lexOut.textContent = lexText || 'Nenhum token.';
-      // semantico
-      semOut.textContent = data.semantico ? (typeof data.semantico === 'string' ? data.semantico : JSON.stringify(data.semantico,null,2)) : 'Nenhuma análise semântica.';
-      // ast - renderizar como árvore visual
-      const astOutput = document.getElementById('astOutput');
-      if (data.ast) {
-        if (window.ASTTreeRenderer) {
-          const astRenderer = new window.ASTTreeRenderer(astOutput);
-          astRenderer.render(data.ast);
-        } else {
-          astOutput.textContent = data.ast;
-        }
-      } else {
-        astOutput.textContent = 'Nenhuma árvore sintática gerada.';
-      }
-      // symbol table - renderizar tabela de símbolos
-      if (symbolTableOut && data.symbol_table) {
-        renderSymbolTable(data.symbol_table);
-      } else if (symbolTableOut) {
-        symbolTableOut.textContent = 'Tabela de símbolos não disponível.';
-      }
-      // tac (código de 3 endereços) — backend pode fornecer com chaves diferentes
-      if(tacOut){
-        const tacText = data.tac || data.tac_code || data.threeAddress || data.three_address || data.three_address_code || '';
-        tacOut.textContent = tacText ? (typeof tacText === 'string' ? tacText : JSON.stringify(tacText,null,2)) : 'TAC não fornecido pelo backend.';
-      }
-      // exec
-      const execText = data.exec || data.execucao || data.stdout || data.output || '';
-      execOut.textContent = (typeof execText === 'string' ? execText : JSON.stringify(execText,null,2)) || '(Nenhuma saída de execução fornecida pelo backend)';
-      // Tratamento de entrada interativa: se backend indica que está esperando entrada, mostrar prompt
-      if(data.waiting_for_input){
-        currentRunId = data.run_id || data.runId || null;
-        showInputPrompt(currentRunId, data.prompt || '');
-      } else {
-        removeInputPrompt();
-        currentRunId = null;
-      }
-    }catch(err){ console.error(err); execOut.textContent=''; lexOut.textContent='❌ Erro ao conectar com o servidor.'; semOut.textContent=''; document.getElementById('astOutput').textContent=''; }
+      processInterpretResult(data);
+    }catch(err){ 
+      console.error(err); 
+      execOut.textContent=''; 
+      lexOut.textContent='❌ Erro ao conectar com o servidor.'; 
+      semOut.textContent=''; 
+      document.getElementById('astOutput').textContent=''; 
+    }
   }
 
   runBtn.addEventListener('click', interpretarCodigo);

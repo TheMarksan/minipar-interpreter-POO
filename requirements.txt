@@ -1,0 +1,10 @@
+# MiniPar Interpreter - Dependências Python
+
+# WebSocket Support
+websockets>=12.0
+
+# Async HTTP (opcional, para melhorias futuras)
+aiohttp>=3.9.0
+
+# Utility
+python-dotenv>=1.0.0

@@ -203,6 +203,42 @@ p.lead{margin:0;color:var(--muted);font-size:13px}
   box-shadow:0 10px 35px rgba(124,92,255,0.6), inset 0 1px 0 rgba(255,255,255,0.3);
   transform: translateY(-3px);
 }
+
+/* AST View Toggle Button */
+.btn-ast-view {
+  background: var(--glass);
+  border: 1px solid rgba(255,255,255,0.08);
+  padding: 6px 12px;
+  border-radius: 8px;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+}
+.btn-ast-view:hover {
+  background: rgba(124, 92, 255, 0.15);
+  border-color: rgba(124, 92, 255, 0.3);
+  color: var(--accent);
+  transform: translateY(-1px);
+}
+.btn-ast-view .view-icon {
+  font-size: 14px;
+}
+.btn-ast-view .view-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.btn-ast-view[data-mode="text"] {
+  background: rgba(124, 92, 255, 0.1);
+  border-color: rgba(124, 92, 255, 0.25);
+  color: var(--accent);
+}
 .btn.primary:active {
   transform: translateY(-1px);
   box-shadow:0 6px 20px rgba(124,92,255,0.5);
@@ -556,10 +592,53 @@ p.lead{margin:0;color:var(--muted);font-size:13px}
 
 .ast-text {
   margin: 0;
-  padding: 12px;
-  background: rgba(0,0,0,0.2);
+  padding: 16px;
+  background: rgba(0,0,0,0.3);
   border-radius: 8px;
   overflow-x: auto;
+  border: 1px solid rgba(255,255,255,0.05);
+  box-shadow: inset 0 2px 8px rgba(0,0,0,0.3);
+}
+
+/* AST Text Mode - Enhanced Syntax Highlighting */
+.ast-text span {
+  transition: opacity 0.2s ease;
+}
+
+.ast-text:hover span:not(:hover) {
+  opacity: 0.7;
+}
+
+/* Melhorar legibilidade no modo texto */
+#astOutput.text-mode {
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+#astOutput.text-mode .ast-text {
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+/* Scrollbar personalizada para AST text mode */
+#astOutput.text-mode .ast-text::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+#astOutput.text-mode .ast-text::-webkit-scrollbar-track {
+  background: rgba(0,0,0,0.2);
+  border-radius: 4px;
+}
+
+#astOutput.text-mode .ast-text::-webkit-scrollbar-thumb {
+  background: rgba(124, 92, 255, 0.3);
+  border-radius: 4px;
+}
+
+#astOutput.text-mode .ast-text::-webkit-scrollbar-thumb:hover {
+  background: rgba(124, 92, 255, 0.5);
 }
 
 /* Symbol Table Styles */
@@ -830,6 +909,18 @@ body.light-theme .meta.info-box:hover {
   border-color: rgba(0,0,0,0.3);
   background: rgba(0,0,0,0.05);
   opacity: 1;
+}
+
+body.light-theme .ws-status {
+  background: rgba(0,0,0,0.08);
+}
+
+body.light-theme .ws-status.connected .ws-text {
+  color: #00a866;
+}
+
+body.light-theme .ws-status.disconnected .ws-text {
+  color: #d32f2f;
 }
 
 body.light-theme .chip {
@@ -1133,6 +1224,69 @@ footer{grid-column:1/-1;margin-top:14px;color:var(--muted);font-size:13px;text-a
 }
 
 .kbd{background:rgba(255,255,255,0.03);padding:6px 8px;border-radius:6px;font-family:var(--mono);font-size:12px;color:var(--muted)}
+
+/* WebSocket Status Indicator */
+.ws-status{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.05);
+  font-size: 12px;
+  transition: all 0.3s ease;
+  cursor: help;
+}
+
+.ws-indicator{
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #999;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+/* Estado: Conectando */
+.ws-status.connecting .ws-indicator{
+  background: #ffa500;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* Estado: Conectado */
+.ws-status.connected .ws-indicator{
+  background: #00ff88;
+  box-shadow: 0 0 8px rgba(0,255,136,0.6);
+}
+
+/* Estado: Desconectado */
+.ws-status.disconnected .ws-indicator{
+  background: #ff4444;
+}
+
+/* Estado: Executando */
+.ws-status.executing .ws-indicator{
+  background: #00aaff;
+  animation: pulse 0.8s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(1.3); }
+}
+
+.ws-text{
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.ws-status.connected .ws-text{
+  color: #00ff88;
+}
+
+.ws-status.disconnected .ws-text{
+  color: #ff4444;
+}
 
 /* Cores de resultado */
 .tok-keyword{color:var(--accent);}

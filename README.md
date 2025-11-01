@@ -1,8 +1,17 @@
 # 🚀 Interpretador MiniPar 2025.1 (Orientado a Objetos)
 
-**Equipe:** Aldary Wanderley, Guilherme Coutinho, Marcos Melo e Ruan <br>
-**Disciplina:** Compiladores <br>
-**Professor:** Arturo Hernandez Dominguez
+---
+
+## 👥 Equipe de Desenvolvimento
+
+- **Aldary Wanderley**
+- **Guilherme Coutinho**
+- **Marcos Melo**
+- **Ruan**
+
+**Professor Orientador:** Arturo Hernandez Dominguez  
+**Disciplina:** Compiladores  
+**Instituição:** UFAL - Universidade Federal de Alagoas
 
 ---
 
@@ -13,17 +22,20 @@
 git clone https://github.com/TheMarksan/minipar-interpreter-POO.git
 cd minipar-interpreter-POO
 
-# 2. Inicie o servidor backend (porta 8000)
-python3 scripts/interpret_server.py --host 127.0.0.1 --port 8000 &
+# 2. Deploy automático (inicia todos os servidores)
+./deploy.sh
 
-# 3. Inicie o servidor frontend (porta 8080)
-python3 -m http.server 8080 --directory frontend &
-
-# 4. Acesse a IDE no navegador
-# http://127.0.0.1:8080
+# 3. Acesse a IDE no navegador
+# Local:  http://localhost:8080
+# Rede:   http://<SEU_IP>:8080
 ```
 
 **Pronto!** Agora você pode escrever e executar programas MiniPar na interface web! 🎉
+
+### 📊 O que foi iniciado:
+- ✅ **Frontend** (porta 8080) - Interface web com editor
+- ✅ **REST API** (porta 8000) - Backend para interpretação
+- ✅ **WebSocket** (porta 8001) - Comunicação em tempo real
 
 ---
 
@@ -33,12 +45,15 @@ Este projeto implementa um **interpretador completo** para a linguagem **MiniPar
 O interpretador foi desenvolvido em **Python 3**, seguindo os princípios de **Programação Orientada a Objetos (POO)** e **Engenharia de Software**.
 
 ### 🎯 Principais Características
-- ✨ **Interface Web Completa** - IDE com editor, syntax highlighting e painéis de resultado
+- ✨ **Interface Web Completa** - IDE com editor CodeMirror, syntax highlighting e painéis interativos
 - 🔍 **Análise Completa** - Léxica, Sintática, Semântica e Geração de TAC
 - 🧵 **Execução Paralela** - Suporte nativo a threads e comunicação via canais
 - 🎨 **POO Completa** - Classes, herança, métodos, atributos e encapsulamento
 - 📊 **Arrays Multidimensionais** - Suporte a arrays 1D e 2D
 - 🐛 **Validação Robusta** - Detecção de erros em todas as fases da compilação
+- 🌐 **Deploy Facilitado** - Scripts automáticos para deploy local e PythonAnywhere
+- ⚡ **WebSocket** - Comunicação em tempo real com o backend
+- 📊 **Visualização AST** - Árvore visual interativa e modo texto com highlighting
 
 ## ✨ Funcionalidades da Linguagem MiniPar
 
@@ -97,70 +112,111 @@ git clone https://github.com/TheMarksan/minipar-interpreter-POO.git
 cd minipar-interpreter-POO
 ```
 
-### 2️⃣ Iniciando o Backend (Servidor de Interpretação)
+### 2️⃣ Método Recomendado: Deploy Automático
 
-Execute o servidor Python na porta 8000:
+O projeto inclui scripts de deploy automático que configuram tudo:
+
 ```bash
-python3 scripts/interpret_server.py --host 127.0.0.1 --port 8000
+# Inicia todos os servidores
+./deploy.sh
 ```
 
-Ou em background com nohup:
+Este script:
+- ✅ Cria ambiente virtual Python
+- ✅ Instala dependências
+- ✅ Inicia servidor HTTP (Frontend) na porta 8080
+- ✅ Inicia servidor REST (Backend) na porta 8000
+- ✅ Inicia servidor WebSocket na porta 8001
+- ✅ Configura para aceitar conexões de **outras máquinas na rede**
+- ✅ Salva logs em `logs/`
+
+**Ver informações de acesso na rede:**
 ```bash
-nohup python3 scripts/interpret_server.py --host 127.0.0.1 --port 8000 > server.log 2>&1 &
+./show_network_info.sh
 ```
 
-**Verificação:** O servidor deve exibir:
-```
-Servidor rodando em http://127.0.0.1:8000
-```
-
-### 3️⃣ Iniciando o Frontend (Interface Web)
-
-Em outro terminal, inicie o servidor HTTP para a interface:
+**Parar todos os servidores:**
 ```bash
-python3 -m http.server 8080 --directory frontend
+./stop_servers.sh
 ```
 
-Ou em background:
-```bash
-nohup python3 -m http.server 8080 --directory frontend > http.log 2>&1 &
-```
-
-### 4️⃣ Acessando a Interface Web
+### 3️⃣ Acessando a Interface Web
 
 Abra seu navegador e acesse:
+
+**Local:**
 ```
-http://127.0.0.1:8080
+http://localhost:8080
+```
+
+**De outros dispositivos na mesma rede:**
+```
+http://<SEU_IP>:8080
 ```
 
 Você verá a **IDE MiniPar** com:
-- ✏️ Editor de código com syntax highlighting
+- ✏️ Editor CodeMirror com syntax highlighting
 - ▶️ Botão "Executar" para interpretar o código
-- 📊 Painéis de resultados (Léxico, Sintático, Semântico, TAC, Execução)
-- 📁 Exemplos prontos para testar
+- 📊 Painéis de resultados (Léxico, AST, Semântico, Tabela de Símbolos, TAC, Execução)
+- 📁 Exemplos prontos categorizados
+- 🎨 Tema escuro/claro
+- 🌐 Indicador de conexão WebSocket
 
-### 5️⃣ Testando o Sistema
+### 4️⃣ Testando o Sistema
 
-**Opção A - Via Interface Web:**
-1. Acesse http://127.0.0.1:8080
-2. Digite ou carregue um programa MiniPar
-3. Clique em "Executar"
-4. Veja os resultados nos painéis
+**Via Interface Web:**
+1. Acesse http://localhost:8080
+2. Selecione um exemplo no menu dropdown ou digite seu código
+3. Clique em "Executar" (ou Ctrl+Enter)
+4. Veja os resultados nos painéis expansíveis
 
-**Opção B - Via Linha de Comando:**
+### 5️⃣ Deploy Manual (Alternativo)
+
+Se preferir iniciar os servidores manualmente:
+
+**Backend (REST API):**
 ```bash
-# Testar um programa específico
-curl -X POST http://127.0.0.1:8000/interpretar \
-  -H "Content-Type: application/json" \
-  -d '{"code": "SEQ { INT x; x = 10; print(\"x = \" + x + \"\\n\"); }"}'
-
-# Testar programa de arquivo
-curl -X POST http://127.0.0.1:8000/interpretar \
-  -H "Content-Type: application/json" \
-  -d "{\"code\": $(python3 -c 'import json; print(json.dumps(open("tests/hello_world.minipar").read()))')}"
+python3 scripts/interpret_server.py --host 0.0.0.0 --port 8000
 ```
 
-**Opção C - Script Python Direto:**
+**Frontend (HTTP):**
+```bash
+python3 -m http.server 8080 --bind 0.0.0.0 --directory frontend
+```
+
+**WebSocket (Tempo Real):**
+```bash
+python3 server_websocket.py
+```
+
+### 🌐 Acesso de Outros Dispositivos na Rede
+
+Para acessar de outros computadores/celulares na mesma rede:
+
+1. **Descubra seu IP:**
+   ```bash
+   ./show_network_info.sh
+   ```
+
+2. **No outro dispositivo:**
+   - Acesse: `http://<SEU_IP>:8080`
+
+3. **Liberar firewall (se necessário):**
+   ```bash
+   sudo ufw allow 8080/tcp
+   sudo ufw allow 8000/tcp
+   sudo ufw allow 8001/tcp
+   ```
+
+**Via API REST:**
+```bash
+# Testar um programa específico
+curl -X POST http://localhost:8000/interpretar \
+  -H "Content-Type: application/json" \
+  -d '{"code": "SEQ { INT x; x = 10; print(\"x = \" + x + \"\\n\"); }"}'
+```
+
+**Via Script Python Direto:**
 ```bash
 cd minipar-interpreter-POO
 python3 << 'EOF'
@@ -201,12 +257,45 @@ EOF
 ### 6️⃣ Parando os Servidores
 
 ```bash
-# Parar servidor de interpretação
-pkill -f "interpret_server.py"
+# Parar todos os servidores (recomendado)
+./stop_servers.sh
 
-# Parar servidor frontend
+# Ou manualmente:
+pkill -f "interpret_server.py"
 pkill -f "http.server 8080"
+pkill -f "server_websocket.py"
 ```
+
+---
+
+## 🌐 Deploy Remoto (PythonAnywhere)
+
+Para disponibilizar o interpretador online gratuitamente:
+
+### Passo 1: Preparar Deploy
+```bash
+./prepare_pythonanywhere.sh
+```
+
+Isso gera `minipar-pythonanywhere.tar.gz` (~124 KB) pronto para upload.
+
+### Passo 2: Configurar PythonAnywhere
+
+1. Crie conta gratuita em: https://www.pythonanywhere.com
+2. Upload do arquivo `minipar-pythonanywhere.tar.gz`
+3. Siga o guia completo em: **[PYTHONANYWHERE.md](PYTHONANYWHERE.md)**
+
+### 📖 Documentação Completa de Deploy
+
+Consulte o guia detalhado com screenshots e troubleshooting:
+- **[PYTHONANYWHERE.md](PYTHONANYWHERE.md)** - Deploy gratuito passo a passo
+
+### Características do Deploy Online
+- ✅ **100% Gratuito** (plano básico)
+- ✅ URL pública: `http://seu_usuario.pythonanywhere.com`
+- ✅ Interface web completa funcional
+- ✅ REST API funcionando
+- ⚠️ WebSocket requer plano pago ($5/mês)
 
 ---
 
@@ -243,33 +332,107 @@ Documentação completa disponível em `docs/`:
 ## 📂 Estrutura do Repositório
 ```bash
 minipar-interpreter-POO/
-├── frontend/          # Interface web (HTML, CSS, JS)
-│   ├── index.html     # Página principal da IDE
-│   ├── home.css       # Estilos da interface
-│   └── home.js        # Lógica da interface
-├── scripts/           # Scripts auxiliares
-│   └── interpret_server.py  # Servidor HTTP de interpretação
-├── src/               # Código-fonte do interpretador
-│   ├── lexer/         # Analisador léxico
-│   ├── parser/        # Analisador sintático
-│   ├── semantic/      # Analisador semântico
-│   ├── symbol_table/  # Tabela de símbolos
-│   ├── runtime/       # Interpretador e gerenciador de threads
-│   ├── codegen/       # Gerador de código TAC
-│   └── utils/         # Utilitários (impressão de AST, etc.)
-├── tests/             # Programas de teste em MiniPar
+├── frontend/                    # Interface web (HTML, CSS, JS)
+│   ├── index.html               # Página principal da IDE
+│   ├── home.css                 # Estilos da interface
+│   ├── home.js                  # Lógica da interface
+│   ├── ast-tree.js              # Renderizador visual de AST
+│   └── websocket-client.js      # Cliente WebSocket
+├── scripts/                     # Scripts auxiliares
+│   └── interpret_server.py      # Servidor REST de interpretação
+├── src/                         # Código-fonte do interpretador
+│   ├── lexer/                   # Analisador léxico
+│   │   ├── Lexer.py
+│   │   ├── token.py
+│   │   └── token_type.py
+│   ├── parser/                  # Analisador sintático
+│   │   ├── Parser.py
+│   │   └── AST.py
+│   ├── semantic/                # Analisador semântico
+│   │   └── SemanticAnalyzer.py
+│   ├── symbol_table/            # Tabela de símbolos
+│   │   └── SymbolTable.py
+│   ├── runtime/                 # Interpretador e runtime
+│   │   ├── Interpreter.py
+│   │   ├── ThreadManager.py
+│   │   └── Channel.py
+│   ├── codegen/                 # Gerador de código TAC
+│   │   └── TACGenerator.py
+│   └── utils/                   # Utilitários
+│       └── ast_printer.py
+├── tests/                       # Programas de teste em MiniPar
 │   ├── hello_world.minipar
 │   ├── programa1_cliente_servidor.minipar
 │   ├── programa2_threads.minipar
 │   ├── programa3_neuronio.minipar
-│   ├── programa4_xor_cpp.minipar
+│   ├── programa4_xor.minipar
 │   ├── programa5_recomendacao.minipar
 │   └── programa6_quicksort.minipar
-├── docs/              # Documentação (arquitetura, requisitos, UML)
-├── examples/          # Exemplos extras
-├── reports/           # Relatórios de execução
-└── README.md          # Este arquivo
+├── docs/                        # Documentação técnica
+│   ├── COBERTURA_GRAMATICA.md
+│   ├── RESUMO_ATUALIZACAO_DOCS.md
+│   └── pseudocode/              # Pseudocódigo dos componentes
+├── deploy.sh                    # Script de deploy automático
+├── stop_servers.sh              # Script para parar servidores
+├── show_network_info.sh         # Mostrar IP e URLs de acesso
+├── server_websocket.py          # Servidor WebSocket
+├── prepare_pythonanywhere.sh    # Preparar pacote para PythonAnywhere
+├── pythonanywhere_wsgi.py       # WSGI app para PythonAnywhere
+├── PYTHONANYWHERE.md            # Guia de deploy remoto
+├── requirements.txt             # Dependências Python
+├── LICENSE                      # Licença MIT
+└── README.md                    # Este arquivo
 ```
+
+---
+
+## 🎨 Interface Web - Recursos
+
+A IDE web oferece uma experiência completa de desenvolvimento:
+
+### Editor de Código
+- ✅ **CodeMirror** - Editor profissional com syntax highlighting
+- ✅ **Numeração de linhas** - Facilita navegação
+- ✅ **Atalhos** - Ctrl+Enter para executar
+- ✅ **Temas** - Modo claro e escuro
+
+### Painéis de Resultado
+Cada painel é expansível/colapsável:
+
+1. **📊 Léxico (Tokens)**
+   - Lista todos os tokens identificados
+   - Mostra tipo e valor de cada token
+   - Contador de tokens no rodapé
+
+2. **🌳 AST (Árvore Sintática)**
+   - **Modo Árvore**: Visualização hierárquica interativa
+   - **Modo Texto**: Representação textual com highlighting
+   - Toggle entre os dois modos
+   - Navegação visual da estrutura do programa
+
+3. **✅ Semântico**
+   - Validações de tipo, escopo e uso
+   - Mensagens de erro detalhadas
+   - Status de sucesso/falha
+
+4. **📋 Tabela de Símbolos**
+   - Variáveis, funções e classes declaradas
+   - Informações de tipo e escopo
+   - Estatísticas (total de símbolos, blocos, etc.)
+
+5. **⚡ TAC (Three-Address Code)**
+   - Código intermediário gerado
+   - Representação de baixo nível
+
+6. **▶️ Saída de Execução**
+   - Output do programa (print, etc.)
+   - Erros de runtime
+
+### Recursos Adicionais
+- 📁 **Exemplos Prontos** - Dropdown com programas categorizados
+- 🌐 **WebSocket Status** - Indicador de conexão em tempo real
+- 🧹 **Limpar** - Reseta editor e resultados
+- 📤 **Copiar Tokens** - Exporta análise léxica
 
 ---
 
@@ -406,49 +569,88 @@ Na pasta `tests/` você encontra programas completos para testar:
 
 ## 🐛 Solução de Problemas
 
-### Servidor não inicia
-```bash
-# Verificar se a porta está em uso
-lsof -i :8000
-lsof -i :8080
+### Servidores não iniciam
 
-# Matar processos anteriores
-pkill -f "interpret_server.py"
-pkill -f "http.server 8080"
+**Problema:** Portas já em uso
+
+```bash
+# Parar todos os servidores
+./stop_servers.sh
+
+# Ou verificar manualmente
+lsof -i :8000  # REST API
+lsof -i :8080  # Frontend
+lsof -i :8001  # WebSocket
+
+# Reiniciar
+./deploy.sh
 ```
 
-### Erro "Module not found"
-```bash
-# Certifique-se de estar no diretório correto
-cd minipar-interpreter-POO
+### WebSocket não conecta
 
-# Verifique a estrutura do projeto
-ls -la src/
+**Sintomas:** Indicador vermelho "WebSocket: Desconectado"
+
+**Soluções:**
+1. Verificar se servidor WebSocket está rodando:
+   ```bash
+   ps aux | grep server_websocket.py
+   ```
+
+2. Verificar logs:
+   ```bash
+   tail -f logs/websocket.log
+   ```
+
+3. Reiniciar apenas WebSocket:
+   ```bash
+   pkill -f server_websocket.py
+   python server_websocket.py &
+   ```
+
+### Interface não carrega / CSS quebrado
+
+**Solução:**
+```bash
+# Limpar cache do navegador
+Ctrl+Shift+R  # ou Cmd+Shift+R no Mac
+
+# Verificar versão dos arquivos
+./update_cache.sh
+
+# Verificar se frontend está acessível
+curl http://localhost:8080
 ```
 
-### Interface não carrega
-- Limpe o cache do navegador (Ctrl+Shift+R ou Cmd+Shift+R)
-- Verifique se o servidor frontend está rodando na porta 8080
-- Acesse o console do navegador (F12) para ver erros
+### Erro "Module not found" no backend
+
+```bash
+# Ativar ambiente virtual
+source venv/bin/activate
+
+# Reinstalar dependências
+pip install -r requirements.txt
+```
 
 ### Código não executa
-- Verifique se há erros de sintaxe no painel "Erros"
-- Certifique-se de usar `#` para comentários (não `//`)
-- Todo código executável deve estar dentro de blocos `SEQ` ou `PAR`
-- Declare todas as variáveis antes de usar
 
----
+**Checklist:**
+- [ ] Use `#` para comentários (não `//`)
+- [ ] Todo código deve estar em blocos `SEQ` ou `PAR`
+- [ ] Declare variáveis antes de usar
+- [ ] Verifique painel "Semântico" para erros
+- [ ] Strings devem usar aspas duplas `"`
 
-## 👥 Equipe de Desenvolvimento
+### Deploy PythonAnywhere não funciona
 
-- **Aldary Wanderley**
-- **Guilherme Coutinho**
-- **Marcos Melo**
-- **Ruan**
+Consulte troubleshooting detalhado em: **[PYTHONANYWHERE.md](PYTHONANYWHERE.md)**
 
-**Professor Orientador:** Arturo Hernandez Dominguez  
-**Disciplina:** Compiladores  
-**Instituição:** UFAL - Universidade Federal de Alagoas
+Problemas comuns:
+- Versão errada do Python (use 3.10)
+- USERNAME incorreto no WSGI
+- Virtualenv path errado
+- Dependências não instaladas
+
+
 
 ---
 
@@ -460,12 +662,40 @@ Este projeto foi desenvolvido para fins acadêmicos como parte da disciplina de 
 
 ## 🔗 Links Úteis
 
-- [Documentação Completa](docs/)
-- [Especificação da Linguagem](src/BNF.md)
-- [Arquitetura do Sistema](docs/arquitetura.md)
-- [Requisitos](docs/requisitos.md)
-- [Testes de Integração](docs/testes_integracao.md)
+- 📖 [Especificação da Linguagem (BNF)](src/BNF.md)
+
+
+## 📊 Status do Projeto
+
+- ✅ Análise Léxica completa
+- ✅ Análise Sintática completa
+- ✅ Análise Semântica completa
+- ✅ Geração de TAC
+- ✅ Interpretador funcional
+- ✅ Suporte a threads e canais
+- ✅ POO (Classes, herança, métodos)
+- ✅ Interface web completa
+- ✅ WebSocket para tempo real
+- ✅ Deploy automatizado
+- ✅ Deploy remoto (PythonAnywhere)
+
+## 🎯 Tecnologias Utilizadas
+
+**Backend:**
+- Python 3.8+
+- asyncio (WebSocket)
+- http.server (REST API)
+
+**Frontend:**
+- HTML5 / CSS3 / JavaScript ES6+
+- CodeMirror (Editor de código)
+- WebSocket API (Comunicação tempo real)
+
+**Deploy:**
+- Scripts Bash
+- PythonAnywhere (WSGI)
+- Git
 
 ---
 
-**Desenvolvido com ❤️ pela equipe MiniPar - UFAL 2025.1**
+
