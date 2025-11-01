@@ -249,12 +249,26 @@ CLASS RedeNeural {
                  FLOAT in3_0, FLOAT in3_1, FLOAT out3,
                  INT epocas) {
         INT epoca;
+        INT intervalo;
+        
+        intervalo = epocas / 10;
+        if intervalo < 1 {
+            intervalo = 1;
+        }
         
         for epoca = 0; epoca < epocas; epoca = epoca + 1 {
             this.backpropagation(in0_0, in0_1, out0);
             this.backpropagation(in1_0, in1_1, out1);
             this.backpropagation(in2_0, in2_1, out2);
             this.backpropagation(in3_0, in3_1, out3);
+            
+            if epoca % intervalo == 0 {
+                print("Epoca ");
+                print(epoca);
+                print(" de ");
+                print(epocas);
+                print("\n");
+            }
         }
     }
     
@@ -281,13 +295,13 @@ SEQ {
     rede[0] = new RedeNeural();
     rede[0].init(0.2);
     
-    print("Treinando com 10000 epocas...\n");
+    print("Treinando com 10 epocas...\n");
     
     rede[0].treinar(0.0, 0.0, 0.0,
                     0.0, 1.0, 1.0,
                     1.0, 0.0, 1.0,
                     1.0, 1.0, 0.0,
-                    10000);
+                    10);
     
     print("Resultados apos treinamento:\n");
     

@@ -70,6 +70,7 @@ class TokenType(Enum):
     
     # Outros
     UNKNOWN = auto()
+    ERROR = auto()        # Token de erro para reportar problemas léxicos
     LBRACKET = auto()     # [
     RBRACKET = auto()     # ]
 

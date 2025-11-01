@@ -295,7 +295,7 @@ class TACGenerator:
     def visit_ForNode(self, node):
         """Gera TAC para for loop"""
         # Inicialização
-        self.visit(node.init)
+        self.visit(node.init_expr)
         
         label_start = self.new_label()
         label_end = self.new_label()

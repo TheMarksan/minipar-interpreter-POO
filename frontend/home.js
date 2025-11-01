@@ -23,15 +23,83 @@ document.addEventListener('DOMContentLoaded', () => {
     if(gutter) gutter.textContent = s;
   }
 
-  // Exemplo padrão e exemplos (com SEQ quando apropriado)
-  const sample = `// Exemplo MiniPar-like\nvar x = 10;\nprint(x);\n`;
+  // Exemplo padrão e exemplos (seguindo a sintaxe MiniPar)
+  const sample = `# Exemplo MiniPar
+SEQ {
+    INT x;
+    x = 10;
+    print("Valor de x: " + x + "\\n");
+}
+`;
   const examples = {
-    'Print & Arithmetic': `SEQ {\nprint("Soma: " + (1 + 2) + "\\n");\nprint("Mult: " + (2 * 3) + "\\n");\n}\n`,
-    'Variables & If': `SEQ {\nINT x;\nINT y;\nx = 10;\ny = 5;\nif (x > y) { print("x maior\\n"); } else { print("x menor\\n"); }\n}\n`,
-    'Loops & Functions': `SEQ {\nINT soma(INT a, INT b) { return a + b; }\nINT i;\nfor i = 0; i < 3; i = i + 1 { print("i=" + i + "\\n"); }\nprint("soma 3+4 = " + soma(3,4) + "\\n");\n}\n`,
-    'Channels Send/Receive': `SEQ {\n// canal_resultados precisa existir no runtime\ncanal_resultados.send(42);\nprint("Sent 42\\n");\n}\n`,
-    'Hello World (threads)': `SEQ {\nvoid f1(){ int i; i=0; while i != 3 { print("A:"+i+"\\n"); i = i + 1; } }\nvoid f2(){ int j; j=3; while j != 0 { print("B:"+j+"\\n"); j = j - 1; } }\npar { f1(); f2(); }\n}\n`,
-    'Threads - cliente/servidor (programa2)': `SEQ {\n// Demo simplificado cliente/servidor (use arquivo de teste completo)\ncanal_resultados.send(10);\nprint("Enviado 10 para canal\\n");\n}\n`
+    'Print & Arithmetic': `SEQ {
+    print("Soma: " + (1 + 2) + "\\n");
+    print("Mult: " + (2 * 3) + "\\n");
+}
+`,
+    'Variables & If': `SEQ {
+    INT x;
+    INT y;
+    x = 10;
+    y = 5;
+    if (x > y) {
+        print("x maior\\n");
+    } else {
+        print("x menor\\n");
+    }
+}
+`,
+    'Loops & Functions': `SEQ {
+    INT soma(INT a, INT b) {
+        return a + b;
+    }
+    
+    INT i;
+    for i = 0; i < 3; i = i + 1 {
+        print("i=" + i + "\\n");
+    }
+    print("soma 3+4 = " + soma(3,4) + "\\n");
+}
+`,
+    'Channels Send/Receive': `# Comunicação por canais
+SEQ {
+    C_CHANNEL canal_resultados;
+    canal_resultados.send(42);
+    print("Enviado 42\\n");
+}
+`,
+    'Hello World (threads)': `SEQ {
+    VOID f1() {
+        INT i;
+        i = 0;
+        while (i != 3) {
+            print("A:" + i + "\\n");
+            i = i + 1;
+        }
+    }
+    
+    VOID f2() {
+        INT j;
+        j = 3;
+        while (j != 0) {
+            print("B:" + j + "\\n");
+            j = j - 1;
+        }
+    }
+    
+    PAR {
+        f1();
+        f2();
+    }
+}
+`,
+    'Threads - cliente/servidor (programa2)': `# Demo simplificado cliente/servidor
+SEQ {
+    C_CHANNEL canal_resultados;
+    canal_resultados.send(10);
+    print("Enviado 10 para canal\\n");
+}
+`
   };
 
   // Carregar exemplo

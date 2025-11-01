@@ -121,9 +121,25 @@ class SimpleHandler(BaseHTTPRequestHandler):
             lexer = Lexer(code)
             tokens = lexer.tokenize()
             lex_out = []
+            has_error = False
+            error_messages = []
+            
             for t in tokens:
                 ttype = getattr(t.type, 'name', str(t.type))
                 lex_out.append({'type': ttype, 'lexeme': t.lexeme, 'line': t.line})
+                
+                # Verificar se há token de erro
+                if ttype == 'ERROR':
+                    has_error = True
+                    error_messages.append(t.lexeme)
+            
+            # Se há erro léxico, retornar imediatamente com mensagem clara
+            if has_error:
+                self._set_headers(400)
+                error_text = '\n'.join(error_messages)
+                self.wfile.write(json.dumps({'erro': error_text, 'lexico': lex_out}).encode())
+                return
+                
         except Exception as e:
             self._set_headers(500)
             self.wfile.write(json.dumps({'erro': f'Erro no lexer: {e}'}).encode())
@@ -187,6 +203,20 @@ class SimpleHandler(BaseHTTPRequestHandler):
         # Try to execute the AST using the Interpreter and capture stdout.
         # To support interactive `input()` we run execution in a background thread
         # and expose a small run registry (RUNS) where the frontend can POST input
+        
+        # NÃO EXECUTAR SE HOUVER ERROS SEMÂNTICOS
+        if not sem_res.get('success', False) or sem_res.get('errors'):
+            response['run_id'] = None
+            response['exec'] = ''
+            response['execucao'] = '# Execução não realizada devido a erros semânticos'
+            response['stdout'] = ''
+            response['waiting_for_input'] = False
+            response['prompt'] = None
+            
+            self._set_headers()
+            self.wfile.write(json.dumps(response, ensure_ascii=False).encode('utf-8'))
+            return
+        
         try:
             interp = Interpreter()
 

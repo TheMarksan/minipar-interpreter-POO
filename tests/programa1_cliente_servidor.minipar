@@ -126,8 +126,9 @@ VOID computador_2() {
 PAR {
     computador_1();
     computador_2();
+
+    PRINT("\n");
+    PRINT("Cliente-Servidor: Comunicação concluída com sucesso!\n");
+    PRINT("\n");    
 }
 
-PRINT("\n");
-PRINT("Cliente-Servidor: Comunicação concluída com sucesso!\n");
-PRINT("\n");

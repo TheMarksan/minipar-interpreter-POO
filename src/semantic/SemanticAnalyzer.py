@@ -214,9 +214,28 @@ class SemanticAnalyzer:
     # ============================================================================
 
     def visit_ProgramNode(self, node):
-        """Analisa o programa completo."""
+        """Analisa o programa completo com validação de estrutura."""
+        # Verificar se há código executável fora de SEQ/PAR
+        has_seq_or_par = False
+        loose_statements = []
+        
         for child in node.children:
+            # Verificar se é um bloco SEQ/PAR
+            if hasattr(child, '__class__') and child.__class__.__name__ == 'BlockNode':
+                has_seq_or_par = True
+            # Verificar se é código executável solto (não é classe, função ou bloco)
+            elif hasattr(child, '__class__'):
+                class_name = child.__class__.__name__
+                if class_name not in ['ClassNode', 'FunctionNode', 'BlockNode']:
+                    # Permitir declarações globais de variáveis/canais
+                    if class_name != 'DeclarationNode':
+                        loose_statements.append(class_name)
+            
             self.visit(child)
+        
+        # Erro se há código executável sem estar em SEQ/PAR
+        if loose_statements:
+            self.error(f"Código executável encontrado fora de blocos SEQ/PAR. O código MiniPar deve estar dentro de um bloco SEQ {{ }} ou PAR {{ }}. Encontrado: {', '.join(set(loose_statements))}")
 
     def visit_ClassNode(self, node):
         """Analisa declaração de classe."""

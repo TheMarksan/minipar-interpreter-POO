@@ -1,3 +1,6 @@
+# Declaração do canal de comunicação entre threads
+C_CHANNEL canal_resultados;
+
 INT input_int(STRING mensagem) {
     print(mensagem + "\n");
     INT valor;

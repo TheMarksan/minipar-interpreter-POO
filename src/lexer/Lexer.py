@@ -78,15 +78,28 @@ class Lexer:
 
             # ------------------- Comentários -------------------
             if char == '#':
-                # Comentário de linha conforme BNF
+                # Comentário de linha conforme BNF (# até fim da linha)
                 lexeme = ""
                 while self.peek() != '\n' and self.peek() != '\0':
                     lexeme += self.advance()
                 self.add_token(tokens, TokenType.COMMENT, lexeme, start_line, start_col)
                 continue
             
-            # ------------------- Operador de divisão -------------------
+            # ------------------- Operador de divisão e comentários C-style -------------------
             if char == '/':
+                # Verificar se é // (comentário não suportado)
+                if self.peek() == '/':
+                    # Consumir o segundo /
+                    self.advance()
+                    # Consumir o resto da linha para contexto do erro
+                    error_preview = ""
+                    while self.peek() != '\n' and self.peek() != '\0' and len(error_preview) < 30:
+                        error_preview += self.advance()
+                    # Criar token de erro com mensagem clara
+                    error_msg = f"Comentário '//' não suportado. Use '#' para comentários. Linha {start_line}"
+                    self.add_token(tokens, TokenType.ERROR, error_msg, start_line, start_col)
+                    continue
+                # É apenas divisão
                 self.add_token(tokens, TokenType.DIV, '/', start_line, start_col)
                 continue
 
