@@ -1010,6 +1010,11 @@ SEQ {
   // Abrir modal
   if (astExpandBtn) {
     astExpandBtn.addEventListener('click', () => {
+      console.log('🔍 Abrindo modal de AST');
+      console.log('  currentAstData:', currentAstData);
+      console.log('  astViewMode:', astViewMode);
+      console.log('  ASTTreeRenderer disponível:', !!window.ASTTreeRenderer);
+      
       if (currentAstData) {
         astModal.classList.add('show');
         // Copiar conteúdo da AST para o modal
@@ -1095,28 +1100,37 @@ SEQ {
     }
     
     if (mode === 'tree') {
-      // Modo árvore visual - usar ast-tree.js
-      if (typeof renderASTTree === 'function') {
-        try {
-          renderASTTree(astData, astModalContent);
-        } catch (err) {
-          console.error('Erro ao renderizar árvore:', err);
-          astModalContent.innerHTML = `<div class="error">Erro ao renderizar árvore visual: ${err.message}</div>`;
-        }
-      } else {
-        astModalContent.textContent = 'Renderizador de árvore não disponível.';
+      // Modo árvore visual - usar ASTTreeRenderer
+      if (!window.ASTTreeRenderer) {
+        astModalContent.innerHTML = '<div class="error">❌ Renderizador de árvore não disponível. Verifique se ast-tree.js foi carregado.</div>';
+        console.error('ASTTreeRenderer não está disponível');
+        return;
+      }
+      
+      try {
+        const modalRenderer = new window.ASTTreeRenderer(astModalContent);
+        modalRenderer.render(astData);
+      } catch (err) {
+        console.error('Erro ao renderizar árvore:', err);
+        astModalContent.innerHTML = `<div class="error">❌ Erro ao renderizar árvore visual: ${err.message}</div>`;
       }
     } else {
       // Modo texto - mostrar AST formatado
-      if (typeof astData === 'string') {
-        astModalContent.textContent = astData;
-      } else {
-        astModalContent.textContent = JSON.stringify(astData, null, 2);
+      if (!window.ASTTreeRenderer) {
+        // Fallback se renderer não estiver disponível
+        const textData = typeof astData === 'string' ? astData : JSON.stringify(astData, null, 2);
+        astModalContent.textContent = textData;
+        return;
       }
       
-      // Aplicar syntax highlighting
-      if (astModalContent.textContent) {
-        astModalContent.innerHTML = syntaxHighlightAST(astModalContent.textContent);
+      try {
+        const modalRenderer = new window.ASTTreeRenderer(astModalContent);
+        const textData = typeof astData === 'string' ? astData : JSON.stringify(astData, null, 2);
+        modalRenderer.renderTextAST(textData);
+      } catch (err) {
+        console.error('Erro ao renderizar texto:', err);
+        const textData = typeof astData === 'string' ? astData : JSON.stringify(astData, null, 2);
+        astModalContent.textContent = textData;
       }
     }
   }
