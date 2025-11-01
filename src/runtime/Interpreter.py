@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 # ============================================================================
 
 from parser.AST import *
-from runtime.Channel import Channel
+from runtime.Channel import Channel, NetworkChannel
 from runtime.ThreadManager import ThreadManager
 from symbol_table.SymbolTable import SymbolTable
 
@@ -45,14 +45,33 @@ class ObjectInstance:
                     dim1 = int(dim1.value)
                 if isinstance(dim2, NumberNode):
                     dim2 = int(dim2.value)
-                # Create 2D array
-                self.attributes[attr.name] = [[None for _ in range(int(dim2))] for _ in range(int(dim1))]
+                # Inicializar com valor padrão baseado no tipo
+                if attr.type_name.upper() == "INT":
+                    self.attributes[attr.name] = [[0 for _ in range(int(dim2))] for _ in range(int(dim1))]
+                elif attr.type_name.upper() == "FLOAT":
+                    self.attributes[attr.name] = [[0.0 for _ in range(int(dim2))] for _ in range(int(dim1))]
+                elif attr.type_name.upper() == "STRING":
+                    self.attributes[attr.name] = [["" for _ in range(int(dim2))] for _ in range(int(dim1))]
+                elif attr.type_name.upper() == "BOOL":
+                    self.attributes[attr.name] = [[False for _ in range(int(dim2))] for _ in range(int(dim1))]
+                else:
+                    self.attributes[attr.name] = [[None for _ in range(int(dim2))] for _ in range(int(dim1))]
             elif hasattr(attr, 'is_array') and attr.is_array and hasattr(attr, 'array_size') and attr.array_size:
                 # 1D array
                 size = attr.array_size
                 if isinstance(size, NumberNode):
                     size = int(size.value)
-                self.attributes[attr.name] = [None] * int(size)
+                # Inicializar com valor padrão baseado no tipo
+                if attr.type_name.upper() == "INT":
+                    self.attributes[attr.name] = [0] * int(size)
+                elif attr.type_name.upper() == "FLOAT":
+                    self.attributes[attr.name] = [0.0] * int(size)
+                elif attr.type_name.upper() == "STRING":
+                    self.attributes[attr.name] = [""] * int(size)
+                elif attr.type_name.upper() == "BOOL":
+                    self.attributes[attr.name] = [False] * int(size)
+                else:
+                    self.attributes[attr.name] = [None] * int(size)
             else:
                 self.attributes[attr.name] = None
     
@@ -86,7 +105,7 @@ class ObjectInstance:
 
 
 class Interpreter:
-    def __init__(self):
+    def __init__(self, channel_bind=None, channel_connect=None, node_id=None, channel_map=None):
         self.symbol_table = SymbolTable()
         self.global_scope = {}
         self.local_storage = threading.local()
@@ -95,6 +114,13 @@ class Interpreter:
         self.thread_manager = ThreadManager()
         self.return_value = None
         self.print_lock = threading.Lock()
+        # channel_bind/connect: dict mapping channel_name -> 'host:port'
+        self.channel_bind = channel_bind or {}
+        self.channel_connect = channel_connect or {}
+        # Automatic node mapping: node_id is the identifier of this process
+        # channel_map: dict mapping node_identifier -> 'host:port' for binding
+        self.node_id = node_id
+        self.channel_map = channel_map or {}
     
     @property
     def local_scope(self):
@@ -245,11 +271,87 @@ class Interpreter:
         value = None
         
         if node.type_name.lower() == "c_channel":
-            value = Channel()
+            chan_name = node.identifier
+            # If declaration carries channel_info (ids), use automatic rule:
+            # channel declaration: c_channel name id1 id2
+            # -> id1 is server (bind), id2 is client (connect)
+            if hasattr(node, 'channel_info') and node.channel_info:
+                try:
+                    id1 = node.channel_info[0]
+                    id2 = node.channel_info[1] if len(node.channel_info) > 1 else None
+                except Exception:
+                    id1 = None
+                    id2 = None
+
+                if self.node_id and id1 and id2:
+                    # If this process is the server side for that channel -> bind
+                    if self.node_id == id1:
+                        hostport = self.channel_map.get(id1)
+                        if hostport:
+                            try:
+                                host, port = hostport.split(":", 1)
+                                value = NetworkChannel('server', host, int(port))
+                            except Exception:
+                                value = Channel()
+                        else:
+                            # No mapping provided for server id -> fallback local
+                            value = Channel()
+                    elif self.node_id == id2:
+                        # This process is the client side -> connect to server id1
+                        hostport = self.channel_map.get(id1)
+                        if hostport:
+                            try:
+                                host, port = hostport.split(":", 1)
+                                value = NetworkChannel('client', host, int(port))
+                            except Exception:
+                                value = Channel()
+                        else:
+                            value = Channel()
+                    else:
+                        # This node is not part of the declared pair -> local channel
+                        value = Channel()
+                else:
+                    # No node_id or insufficient channel_info -> fallback to previous CLI mapping
+                    chan_name = node.identifier
+                    if chan_name in self.channel_bind:
+                        hostport = self.channel_bind[chan_name]
+                        try:
+                            host, port = hostport.split(":")
+                            value = NetworkChannel('server', host, int(port))
+                        except Exception:
+                            value = Channel()
+                    elif chan_name in self.channel_connect:
+                        hostport = self.channel_connect[chan_name]
+                        try:
+                            host, port = hostport.split(":")
+                            value = NetworkChannel('client', host, int(port))
+                        except Exception:
+                            value = Channel()
+                    else:
+                        value = Channel()
+            else:
+                # No channel_info: fall back to explicit CLI mappings or local channel
+                chan_name = node.identifier
+                if chan_name in self.channel_bind:
+                    hostport = self.channel_bind[chan_name]
+                    try:
+                        host, port = hostport.split(":")
+                        value = NetworkChannel('server', host, int(port))
+                    except Exception:
+                        value = Channel()
+                elif chan_name in self.channel_connect:
+                    hostport = self.channel_connect[chan_name]
+                    try:
+                        host, port = hostport.split(":")
+                        value = NetworkChannel('client', host, int(port))
+                    except Exception:
+                        value = Channel()
+                else:
+                    value = Channel()
         elif node.is_2d_array and node.array_dimensions:
             # Array bidimensional
             rows = self.evaluate_expression(node.array_dimensions[0])
-            cols = self.evaluate_expression(node.array_dimensions[1]) if node.array_dimensions[1] else 0
+            cols = self.evaluate_expression(node.array_dimensions[1]) if len(node.array_dimensions) > 1 and node.array_dimensions[1] is not None else 0
             
             if node.initial_value:
                 if isinstance(node.initial_value, BraceInitNode):
@@ -271,8 +373,17 @@ class Interpreter:
                     init_val = self.evaluate_expression(node.initial_value)
                     value = [[init_val for _ in range(int(cols))] for _ in range(int(rows))]
             else:
-                # Array vazio
-                value = [[None for _ in range(int(cols))] for _ in range(int(rows))]
+                # Array sem inicialização - inicializar com 0 baseado no tipo
+                if node.type_name.upper() == "INT":
+                    value = [[0 for _ in range(int(cols))] for _ in range(int(rows))]
+                elif node.type_name.upper() == "FLOAT":
+                    value = [[0.0 for _ in range(int(cols))] for _ in range(int(rows))]
+                elif node.type_name.upper() == "STRING":
+                    value = [["" for _ in range(int(cols))] for _ in range(int(rows))]
+                elif node.type_name.upper() == "BOOL":
+                    value = [[False for _ in range(int(cols))] for _ in range(int(rows))]
+                else:
+                    value = [[None for _ in range(int(cols))] for _ in range(int(rows))]
         elif node.is_array:
             # Array unidimensional
             if node.initial_value:
@@ -284,7 +395,17 @@ class Interpreter:
                     value = self.evaluate_expression(node.initial_value)
             elif node.array_size:
                 size = self.evaluate_expression(node.array_size)
-                value = [None] * int(size)
+                # Inicializar com 0 (INT/FLOAT) ou "" (STRING) ao invés de None
+                if node.type_name.upper() == "INT":
+                    value = [0] * int(size)
+                elif node.type_name.upper() == "FLOAT":
+                    value = [0.0] * int(size)
+                elif node.type_name.upper() == "STRING":
+                    value = [""] * int(size)
+                elif node.type_name.upper() == "BOOL":
+                    value = [False] * int(size)
+                else:
+                    value = [None] * int(size)
             else:
                 value = []
         elif node.initial_value:
@@ -356,7 +477,9 @@ class Interpreter:
     
     def execute_print(self, node):
         value = self.evaluate_expression(node.expression)
-        print(value)
+        if isinstance(value, str):
+            value = value.replace('\\n', '\n').replace('\\t', '\t')
+        print(value, end='')
     
     def execute_input(self, node):
         prompt = ""
@@ -465,7 +588,12 @@ class Interpreter:
         return None
     
     def execute_method_call(self, node):
-        obj = self.get_variable(node.object_name)
+        # object_name pode ser uma string ou AttributeAccessNode (this.usuario)
+        if isinstance(node.object_name, str):
+            obj = self.get_variable(node.object_name)
+        else:
+            # É um AttributeAccessNode, avaliar recursivamente
+            obj = self.evaluate_expression(node.object_name)
         
         if isinstance(obj, ObjectInstance):
             method = obj.get_method(node.method_name)
@@ -498,12 +626,31 @@ class Interpreter:
     
     def execute_send(self, node):
         channel = self.get_variable(node.channel)
+        # If channel variable not declared, create an in-process Channel automatically
+        if channel is None:
+            channel = Channel()
+            # store in global scope by default
+            self.global_scope[node.channel] = channel
+            try:
+                self.symbol_table.define(node.channel, 'c_channel', channel, False, None)
+            except Exception:
+                pass
+
         if isinstance(channel, Channel):
             values = [self.evaluate_expression(val) for val in node.values]
             channel.send(*values)
     
     def execute_receive(self, node):
         channel = self.get_variable(node.channel)
+        # If channel variable not declared, create an in-process Channel automatically
+        if channel is None:
+            channel = Channel()
+            self.global_scope[node.channel] = channel
+            try:
+                self.symbol_table.define(node.channel, 'c_channel', channel, False, None)
+            except Exception:
+                pass
+
         if isinstance(channel, Channel):
             values = channel.receive(len(node.variables))
             
@@ -578,13 +725,34 @@ class Interpreter:
         return None
     
     def evaluate_attribute_access(self, node):
-        obj = self.get_variable(node.object_name)
+        # Suporte a acesso encadeado: this.obj1.obj2.attr
+        from parser.AST import AttributeAccessNode
+        
+        if isinstance(node.object_name, AttributeAccessNode):
+            # Acesso encadeado: primeiro resolve o objeto intermediário
+            obj = self.evaluate_attribute_access(node.object_name)
+        elif isinstance(node.object_name, str):
+            # Acesso simples: busca variável pelo nome
+            obj = self.get_variable(node.object_name)
+        else:
+            # node.object_name pode ser outro tipo de nó
+            obj = self.evaluate_expression(node.object_name)
+        
         if isinstance(obj, ObjectInstance):
             return obj.get_attribute(node.attribute_name)
         return None
     
     def evaluate_array_access(self, node):
-        array = self.get_variable(node.array_name)
+        from parser.AST import AttributeAccessNode
+        
+        # array_name pode ser string ou AttributeAccessNode (this.array)
+        if isinstance(node.array_name, str):
+            array = self.get_variable(node.array_name)
+        elif isinstance(node.array_name, AttributeAccessNode):
+            array = self.evaluate_attribute_access(node.array_name)
+        else:
+            array = self.evaluate_expression(node.array_name)
+        
         if isinstance(array, list):
             if node.index2 is not None:
                 # Array bidimensional
@@ -731,8 +899,9 @@ class Interpreter:
                     array[int(index)] = value
     
     def evaluate_array_access_with_object(self, node):
-        # this.produtos[i] - primeiro pega this.produtos, depois indexa
+        # this.produtos[i] ou this.obj.arr[i] - acesso encadeado suportado
         if isinstance(node.object_attr_access, AttributeAccessNode):
+            # Avaliar completamente a cadeia de atributos até chegar no array
             array = self.evaluate_attribute_access(node.object_attr_access)
             
             if isinstance(array, list):

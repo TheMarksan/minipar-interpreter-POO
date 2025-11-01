@@ -1,6 +1,6 @@
 import re
-from .token_type import TokenType
-from .token import Token
+from lexer.token_type import TokenType
+from lexer.token import Token
 
 class Lexer:
     def __init__(self, source_code: str):
