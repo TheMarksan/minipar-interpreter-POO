@@ -33,7 +33,13 @@ if src_dir not in sys.path:
     sys.path.insert(0, src_dir)
 
 from flask import Flask, request, jsonify, send_from_directory
-from flask_cors import CORS
+
+# CORS é opcional - só necessário se acessar de outro domínio
+try:
+    from flask_cors import CORS
+    CORS_AVAILABLE = True
+except ImportError:
+    CORS_AVAILABLE = False
 
 # Importar componentes do interpretador
 from src.lexer.Lexer import Lexer
@@ -47,7 +53,10 @@ from src.utils.ast_printer import print_ast
 # ============================================================================
 
 app = Flask(__name__, static_folder='frontend', static_url_path='')
-CORS(app)  # Habilitar CORS para todas as rotas
+
+# Habilitar CORS se disponível (não é necessário no PythonAnywhere)
+if CORS_AVAILABLE:
+    CORS(app)
 
 # Dicionário para gerenciar sessões de input
 input_sessions = {}
