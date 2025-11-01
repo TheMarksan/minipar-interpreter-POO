@@ -33,23 +33,103 @@ SEQ {
 }
 `;
   const examples = {
-    'Print & Arithmetic': `SEQ {
-    print("Soma: " + (1 + 2) + "\\n");
-    print("Mult: " + (2 * 3) + "\\n");
-}
-`,
+    // === BÁSICO ===
+    'Hello World': `SEQ {
+    print("Hello, World!\\n");
+    print("Bem-vindo ao MiniPar!\\n");
+}`,
+    
+    'Variáveis e Tipos': `SEQ {
+    INT idade;
+    FLOAT altura;
+    STRING nome;
+    BOOL ativo;
+    
+    idade = 25;
+    altura = 1.75;
+    nome = "Maria";
+    ativo = 1;
+    
+    print("Nome: " + nome + "\\n");
+    print("Idade: " + idade + "\\n");
+    print("Altura: " + altura + "\\n");
+}`,
+    
+    'Print & Operações Aritméticas': `SEQ {
+    print("Soma: " + (10 + 5) + "\\n");
+    print("Subtração: " + (10 - 3) + "\\n");
+    print("Multiplicação: " + (4 * 7) + "\\n");
+    print("Divisão: " + (20 / 4) + "\\n");
+    print("Potência: " + (2 * 2 * 2) + "\\n");
+}`,
+    
+    // === CONTROLE DE FLUXO ===
+    'If-Else': `SEQ {
+    INT nota;
+    nota = 75;
+    
+    if (nota >= 90) {
+        print("Excelente!\\n");
+    } else if (nota >= 70) {
+        print("Bom!\\n");
+    } else if (nota >= 50) {
+        print("Regular\\n");
+    } else {
+        print("Reprovado\\n");
+    }
+}`,
+    
     'Variables & If': `SEQ {
     INT x;
     INT y;
     x = 10;
     y = 5;
     if (x > y) {
-        print("x maior\\n");
+        print("x é maior\\n");
     } else {
-        print("x menor\\n");
+        print("y é maior ou igual\\n");
     }
-}
-`,
+}`,
+    
+    'Switch Case (múltiplos If)': `SEQ {
+    INT opcao;
+    opcao = 2;
+    
+    if (opcao == 1) {
+        print("Opção 1: Novo\\n");
+    } else if (opcao == 2) {
+        print("Opção 2: Abrir\\n");
+    } else if (opcao == 3) {
+        print("Opção 3: Salvar\\n");
+    } else {
+        print("Opção inválida\\n");
+    }
+}`,
+    
+    // === LOOPS ===
+    'For Loop': `SEQ {
+    INT i;
+    INT soma;
+    soma = 0;
+    
+    for i = 1; i <= 5; i = i + 1 {
+        print("i = " + i + "\\n");
+        soma = soma + i;
+    }
+    print("Soma total: " + soma + "\\n");
+}`,
+    
+    'While Loop': `SEQ {
+    INT contador;
+    contador = 5;
+    
+    while (contador > 0) {
+        print("Contagem: " + contador + "\\n");
+        contador = contador - 1;
+    }
+    print("FIM!\\n");
+}`,
+    
     'Loops & Functions': `SEQ {
     INT soma(INT a, INT b) {
         return a + b;
@@ -57,58 +137,308 @@ SEQ {
     
     INT i;
     for i = 0; i < 3; i = i + 1 {
-        print("i=" + i + "\\n");
+        print("Loop " + i + ": soma = " + soma(i, 10) + "\\n");
     }
-    print("soma 3+4 = " + soma(3,4) + "\\n");
-}
-`,
-    'Channels Send/Receive': `# Comunicação por canais
-SEQ {
-    C_CHANNEL canal_resultados;
-    canal_resultados.send(42);
-    print("Enviado 42\\n");
-}
-`,
-    'Hello World (threads)': `SEQ {
-    VOID f1() {
-        INT i;
-        i = 0;
-        while (i != 3) {
-            print("A:" + i + "\\n");
-            i = i + 1;
+}`,
+    
+    'Loop Aninhado (matriz)': `SEQ {
+    INT i;
+    INT j;
+    INT matriz[3][3];
+    
+    for i = 0; i < 3; i = i + 1 {
+        for j = 0; j < 3; j = j + 1 {
+            matriz[i][j] = i * 3 + j;
+            print(matriz[i][j] + " ");
+        }
+        print("\\n");
+    }
+}`,
+    
+    // === FUNÇÕES ===
+    'Função Simples': `SEQ {
+    INT dobro(INT n) {
+        return n * 2;
+    }
+    
+    FLOAT media(FLOAT a, FLOAT b) {
+        return (a + b) / 2.0;
+    }
+    
+    print("Dobro de 7: " + dobro(7) + "\\n");
+    print("Média 8 e 6: " + media(8.0, 6.0) + "\\n");
+}`,
+    
+    'Função Recursiva (Fibonacci)': `SEQ {
+    INT fibonacci(INT n) {
+        if (n <= 1) {
+            return n;
+        }
+        return fibonacci(n - 1) + fibonacci(n - 2);
+    }
+    
+    INT i;
+    print("Sequência Fibonacci:\\n");
+    for i = 0; i < 8; i = i + 1 {
+        print(fibonacci(i) + " ");
+    }
+    print("\\n");
+}`,
+    
+    'Múltiplas Funções': `SEQ {
+    INT fatorial(INT n) {
+        if (n <= 1) return 1;
+        return n * fatorial(n - 1);
+    }
+    
+    BOOL ehPar(INT n) {
+        return (n - (n / 2) * 2) == 0;
+    }
+    
+    print("5! = " + fatorial(5) + "\\n");
+    print("10 é par? " + ehPar(10) + "\\n");
+    print("7 é par? " + ehPar(7) + "\\n");
+}`,
+    
+    // === ARRAYS ===
+    'Array Básico': `SEQ {
+    INT numeros[5];
+    INT i;
+    INT soma;
+    
+    numeros[0] = 10;
+    numeros[1] = 20;
+    numeros[2] = 30;
+    numeros[3] = 40;
+    numeros[4] = 50;
+    
+    soma = 0;
+    for i = 0; i < 5; i = i + 1 {
+        soma = soma + numeros[i];
+    }
+    print("Soma do array: " + soma + "\\n");
+}`,
+    
+    'Array Multidimensional': `SEQ {
+    INT matriz[2][3];
+    INT i;
+    INT j;
+    
+    # Preencher matriz
+    for i = 0; i < 2; i = i + 1 {
+        for j = 0; j < 3; j = j + 1 {
+            matriz[i][j] = (i + 1) * (j + 1);
         }
     }
     
-    VOID f2() {
+    # Imprimir matriz
+    print("Matriz 2x3:\\n");
+    for i = 0; i < 2; i = i + 1 {
+        for j = 0; j < 3; j = j + 1 {
+            print(matriz[i][j] + " ");
+        }
+        print("\\n");
+    }
+}`,
+    
+    // === POO ===
+    'Classe Simples': `class Pessoa {
+    STRING nome;
+    INT idade;
+    
+    VOID setDados(STRING n, INT i) {
+        this.nome = n;
+        this.idade = i;
+    }
+    
+    VOID apresentar() {
+        print("Olá! Meu nome é " + this.nome);
+        print(" e tenho " + this.idade + " anos.\\n");
+    }
+}
+
+SEQ {
+    Pessoa p;
+    p = new Pessoa();
+    p.setDados("João", 30);
+    p.apresentar();
+}`,
+    
+    'Herança (extends)': `class Animal {
+    STRING nome;
+    
+    VOID setNome(STRING n) {
+        this.nome = n;
+    }
+}
+
+class Cachorro extends Animal {
+    VOID latir() {
+        print(this.nome + " diz: Au au!\\n");
+    }
+}
+
+SEQ {
+    Cachorro dog;
+    dog = new Cachorro();
+    dog.setNome("Rex");
+    dog.latir();
+}`,
+    
+    // === THREADS ===
+    'Hello World (threads)': `SEQ {
+    VOID thread1() {
+        INT i;
+        for i = 0; i < 3; i = i + 1 {
+            print("Thread A: " + i + "\\n");
+        }
+    }
+    
+    VOID thread2() {
         INT j;
-        j = 3;
-        while (j != 0) {
-            print("B:" + j + "\\n");
-            j = j - 1;
+        for j = 5; j < 8; j = j + 1 {
+            print("Thread B: " + j + "\\n");
         }
     }
     
     PAR {
-        f1();
-        f2();
+        thread1();
+        thread2();
     }
-}
-`,
-    'Threads - cliente/servidor (programa2)': `# Demo simplificado cliente/servidor
-SEQ {
-    C_CHANNEL canal_resultados;
-    canal_resultados.send(10);
-    print("Enviado 10 para canal\\n");
-}
-`
+}`,
+    
+    'PAR Block': `SEQ {
+    VOID tarefa1() {
+        print("Tarefa 1 iniciada\\n");
+        INT i;
+        for i = 0; i < 3; i = i + 1 {
+            print("T1: processando...\\n");
+        }
+        print("Tarefa 1 concluída\\n");
+    }
+    
+    VOID tarefa2() {
+        print("Tarefa 2 iniciada\\n");
+        INT j;
+        for j = 0; j < 3; j = j + 1 {
+            print("T2: executando...\\n");
+        }
+        print("Tarefa 2 concluída\\n");
+    }
+    
+    PAR {
+        tarefa1();
+        tarefa2();
+    }
+}`,
+    
+    // === CANAIS ===
+    'Channels Send/Receive': `SEQ {
+    C_CHANNEL canal;
+    canal.send(42);
+    canal.send(100);
+    print("Valores enviados para o canal\\n");
+}`,
+    
+    'Canal com Loop': `SEQ {
+    C_CHANNEL resultados;
+    INT i;
+    
+    for i = 1; i <= 5; i = i + 1 {
+        resultados.send(i * 10);
+    }
+    print("Enviados 5 valores para o canal\\n");
+}`,
+    
+    'Múltiplos Canais': `SEQ {
+    C_CHANNEL canal_A;
+    C_CHANNEL canal_B;
+    
+    canal_A.send(10);
+    canal_A.send(20);
+    
+    canal_B.send(30);
+    canal_B.send(40);
+    
+    print("Valores enviados em 2 canais\\n");
+}`,
+    
+    // === STRINGS ===
+    'String Básico': `SEQ {
+    STRING mensagem;
+    STRING nome;
+    
+    nome = "MiniPar";
+    mensagem = "Bem-vindo ao " + nome + "!";
+    
+    print(mensagem + "\\n");
+}`,
+    
+    'Funções String (strlen, substr)': `SEQ {
+    STRING texto;
+    INT tamanho;
+    STRING parte;
+    
+    texto = "Programacao";
+    tamanho = strlen(texto);
+    parte = substr(texto, 0, 7);
+    
+    print("Texto: " + texto + "\\n");
+    print("Tamanho: " + tamanho + "\\n");
+    print("Substring: " + parte + "\\n");
+}`
   };
 
   // Carregar exemplo
-  sampleBtn.addEventListener('click', ()=>{
+  sampleBtn.addEventListener('click', async ()=>{
     const sel = document.getElementById('exampleSel');
-    if(sel && sel.value && examples[sel.value]){ setEditorValue(examples[sel.value]); status.textContent = `Exemplo: ${sel.value} carregado`; }
-    else { setEditorValue(sample); status.textContent = 'Exemplo carregado'; }
-    updateGutter(); setTimeout(()=>status.textContent='Pronto',800);
+    const value = sel?.value;
+    
+    if (!value) {
+      setEditorValue(sample);
+      status.textContent = 'Exemplo carregado';
+      updateGutter();
+      setTimeout(()=>status.textContent='Pronto',800);
+      return;
+    }
+    
+    // Exemplos embutidos
+    if (examples[value]) {
+      setEditorValue(examples[value]);
+      status.textContent = `Exemplo: ${value} carregado`;
+      updateGutter();
+      setTimeout(()=>status.textContent='Pronto',800);
+      return;
+    }
+    
+    // Exemplos de arquivos
+    const fileMap = {
+      'Neuronio (POO)': '../tests/programa3_neuronio.minipar',
+      'Quicksort (arrays/POO)': '../tests/programa6_quicksort.minipar',
+      'Threads - cliente/servidor (programa2)': '../tests/programa2_threads.minipar',
+      'Sistema Recomendação': '../tests/programa5_recomendacao.minipar'
+    };
+    
+    if (fileMap[value]) {
+      try {
+        status.textContent = 'Carregando arquivo...';
+        const resp = await fetch(fileMap[value]);
+        if (resp.ok) {
+          const code = await resp.text();
+          setEditorValue(code);
+          status.textContent = `Arquivo: ${value} carregado`;
+          updateGutter();
+          setTimeout(()=>status.textContent='Pronto',1000);
+        } else {
+          status.textContent = 'Erro ao carregar arquivo';
+          setTimeout(()=>status.textContent='Pronto',1500);
+        }
+      } catch (e) {
+        console.error('Erro ao carregar arquivo:', e);
+        status.textContent = 'Erro ao carregar';
+        setTimeout(()=>status.textContent='Pronto',1500);
+      }
+    }
   });
 
   clearBtn.addEventListener('click', ()=>{ setEditorValue(''); updateGutter(); execOut.textContent=''; lexOut.textContent=''; semOut.textContent=''; tokCount.textContent='0'; status.textContent='Limpo'; setTimeout(()=>status.textContent='Pronto',600)});
@@ -148,6 +478,8 @@ SEQ {
       <span class="meta">• ${symbolTableData.variables.length} variáveis</span>
       <span class="meta">• ${symbolTableData.functions.length} funções</span>
       <span class="meta">• ${symbolTableData.classes.length} classes</span>
+      ${symbolTableData.total_blocks ? `<span class="meta">• ${symbolTableData.total_blocks} blocos</span>` : ''}
+      ${symbolTableData.total_statements ? `<span class="meta">• ${symbolTableData.total_statements} instruções</span>` : ''}
     `;
     container.appendChild(stats);
     
@@ -230,6 +562,42 @@ SEQ {
     
     const classesSection = createSection('Classes', symbolTableData.classes, '🏛️');
     if (classesSection) container.appendChild(classesSection);
+    
+    // Seção de Blocos (SEQ, PAR)
+    if (symbolTableData.blocks && symbolTableData.blocks.length > 0) {
+      const blocksSection = document.createElement('div');
+      blocksSection.className = 'symbol-scope';
+      blocksSection.innerHTML = `
+        <div class="symbol-scope-header">
+          <strong>🔷 Blocos</strong> <span class="meta">(${symbolTableData.blocks.length})</span>
+        </div>
+        <div class="block-stats">
+          ${Object.entries(symbolTableData.blocks.reduce((acc, b) => {
+            acc[b.type] = (acc[b.type] || 0) + 1;
+            return acc;
+          }, {})).map(([type, count]) => `<span class="meta">${type}: ${count}x</span>`).join(' • ')}
+        </div>
+      `;
+      container.appendChild(blocksSection);
+    }
+    
+    // Seção de Instruções (PRINT, IF, FOR, etc)
+    if (symbolTableData.statements && symbolTableData.statements.length > 0) {
+      const statementsSection = document.createElement('div');
+      statementsSection.className = 'symbol-scope';
+      statementsSection.innerHTML = `
+        <div class="symbol-scope-header">
+          <strong>📝 Instruções</strong> <span class="meta">(${symbolTableData.statements.length})</span>
+        </div>
+        <div class="statement-stats">
+          ${Object.entries(symbolTableData.statements.reduce((acc, s) => {
+            acc[s.type] = (acc[s.type] || 0) + 1;
+            return acc;
+          }, {})).map(([type, count]) => `<span class="meta">${type}: ${count}x</span>`).join(' • ')}
+        </div>
+      `;
+      container.appendChild(statementsSection);
+    }
     
     symbolTableOut.appendChild(container);
   }

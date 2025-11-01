@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>MiniPar Interpreter 2025.1</title>
-  <link rel="stylesheet" href="./home.css">
+  <link rel="stylesheet" href="./home.css?v=2025.11.01.10">
   <!-- CodeMirror (para destacar sintaxe) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/dracula.min.css">
@@ -26,16 +26,63 @@
       <div class="toolbar">
         <button class="btn primary" id="runBtn">▶  Executar</button>
         <button class="btn" id="clearBtn">Limpar</button>
-        <select id="exampleSel" class="btn" title="Carregar exemplo" style="min-width:220px">
+        <select id="exampleSel" class="btn" title="Carregar exemplo" style="min-width:220px" size="1">
           <option value="">— Exemplos rápidos —</option>
-          <option value="Print & Arithmetic">Print & Arithmetic</option>
-          <option value="Variables & If">Variables & If</option>
-          <option value="Loops & Functions">Loops & Functions</option>
-          <option value="Channels Send/Receive">Channels Send/Receive</option>
-          <option value="Hello World (threads)">Hello World (threads)</option>
-          <option value="Threads - cliente/servidor (programa2)">Threads - cliente/servidor (programa2)</option>
-          <option value="Neuronio (POO)">Neuronio (POO)</option>
-          <option value="Quicksort (arrays/POO)">Quicksort (arrays/POO)</option>
+          
+          <optgroup label="📝 Básico">
+            <option value="Hello World">Hello World</option>
+            <option value="Variáveis e Tipos">Variáveis e Tipos</option>
+            <option value="Print & Arithmetic">Print & Operações Aritméticas</option>
+          </optgroup>
+          
+          <optgroup label="🔀 Controle de Fluxo">
+            <option value="If-Else">If-Else</option>
+            <option value="Variables & If">Variáveis & If</option>
+            <option value="Switch Case">Switch Case (múltiplos If)</option>
+          </optgroup>
+          
+          <optgroup label="🔁 Loops">
+            <option value="For Loop">For Loop</option>
+            <option value="While Loop">While Loop</option>
+            <option value="Loops & Functions">Loops & Funções</option>
+            <option value="Loop Aninhado">Loop Aninhado (matriz)</option>
+          </optgroup>
+          
+          <optgroup label="🔧 Funções">
+            <option value="Função Simples">Função Simples</option>
+            <option value="Função Recursiva">Função Recursiva (Fibonacci)</option>
+            <option value="Múltiplas Funções">Múltiplas Funções</option>
+          </optgroup>
+          
+          <optgroup label="📚 Arrays">
+            <option value="Array Básico">Array Básico</option>
+            <option value="Array Multidimensional">Array 2D (Matriz)</option>
+            <option value="Quicksort (arrays/POO)">Quicksort (Arrays & POO)</option>
+          </optgroup>
+          
+          <optgroup label="🏛️ POO - Classes">
+            <option value="Classe Simples">Classe Simples</option>
+            <option value="Neuronio (POO)">Neurônio (POO)</option>
+            <option value="Herança">Herança (extends)</option>
+            <option value="Sistema Recomendação">Sistema de Recomendação (POO)</option>
+          </optgroup>
+          
+          <optgroup label="🧵 Threads & Paralelismo">
+            <option value="Hello World (threads)">Hello World (Threads)</option>
+            <option value="Threads - cliente/servidor (programa2)">Cliente/Servidor (programa2)</option>
+            <option value="PAR Block">PAR Block</option>
+          </optgroup>
+          
+          <optgroup label="📡 Canais">
+            <option value="Channels Send/Receive">Send/Receive Básico</option>
+            <option value="Canal com Loop">Canal com Loop</option>
+            <option value="Múltiplos Canais">Múltiplos Canais</option>
+          </optgroup>
+          
+          <optgroup label="🎯 Strings">
+            <option value="String Básico">String Básico</option>
+            <option value="Funções String">Funções String (strlen, substr)</option>
+          </optgroup>
         </select>
         <button class="btn ghost" id="sampleBtn">Carregar</button>
         <div style="flex:1"></div>
@@ -137,8 +184,8 @@
   <!-- Scripts CodeMirror (devem carregar antes de home.js para inicializar o editor) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/clike/clike.min.js"></script>
-  <script src="./ast-tree.js?v=2025.11.01.5"></script>
-  <script src="./home.js?v=2025.11.01.5"></script>
+  <script src="./ast-tree.js?v=2025.11.01.7"></script>
+  <script src="./home.js?v=2025.11.01.7"></script>
   
 </body>
 </html>

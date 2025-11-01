@@ -68,6 +68,8 @@ class SymbolTable:
         self.current_scope = self.global_scope
         self.scope_level = 0
         self.all_symbols = []  # Lista para rastrear todos os símbolos declarados
+        self.blocks = []  # Lista para rastrear blocos (SEQ, PAR)
+        self.statements = []  # Lista para rastrear instruções (PRINT, IF, FOR, etc)
     
     def enter_scope(self):
         self.scope_level += 1
@@ -193,7 +195,11 @@ class SymbolTable:
             'functions': functions,
             'classes': classes,
             'user_types': types,
-            'total_symbols': len(variables) + len(functions) + len(classes) + len(types)
+            'blocks': self.blocks,
+            'statements': self.statements,
+            'total_symbols': len(variables) + len(functions) + len(classes) + len(types),
+            'total_blocks': len(self.blocks),
+            'total_statements': len(self.statements)
         }
     
     def define(self, name, symbol_type, value=None, is_array=False, array_size=None):
@@ -267,6 +273,23 @@ class SymbolTable:
             current = current.parent
         
         return symbols
+    
+    def add_block(self, block_type, line=None):
+        """Registra um bloco (SEQ, PAR) na análise"""
+        self.blocks.append({
+            'type': block_type,
+            'line': line,
+            'scope_level': self.scope_level
+        })
+    
+    def add_statement(self, statement_type, line=None, details=None):
+        """Registra uma instrução (PRINT, IF, FOR, etc) na análise"""
+        self.statements.append({
+            'type': statement_type,
+            'line': line,
+            'scope_level': self.scope_level,
+            'details': details or {}
+        })
     
     def print_table(self):
         print("=== Symbol Table ===")

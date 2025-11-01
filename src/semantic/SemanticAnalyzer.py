@@ -379,6 +379,10 @@ class SemanticAnalyzer:
 
     def visit_BlockNode(self, node):
         """Analisa bloco SEQ ou PAR."""
+        # Registrar o bloco na symbol table
+        block_type = node.block_type.upper() if hasattr(node, 'block_type') else 'BLOCK'
+        self.symbol_table.add_block(block_type, line=getattr(node, 'line', None))
+        
         self.symbol_table.enter_scope()
         for stmt in node.statements:
             self.visit(stmt)
@@ -482,6 +486,8 @@ class SemanticAnalyzer:
 
     def visit_IfNode(self, node):
         """Analisa estrutura condicional IF-ELSE com validação de tipo da condição."""
+        self.symbol_table.add_statement('IF', line=getattr(node, 'line', None), 
+                                       details={'has_else': node.else_body is not None})
         # Verificar tipo da condição
         cond_type = self.visit(node.condition)
         
@@ -513,6 +519,7 @@ class SemanticAnalyzer:
 
     def visit_WhileNode(self, node):
         """Analisa loop WHILE com validação de tipo da condição."""
+        self.symbol_table.add_statement('WHILE', line=getattr(node, 'line', None))
         # Verificar tipo da condição
         cond_type = self.visit(node.condition)
         
@@ -536,6 +543,8 @@ class SemanticAnalyzer:
 
     def visit_ForNode(self, node):
         """Analisa loop FOR com validação de variável de controle, condição e incremento."""
+        self.symbol_table.add_statement('FOR', line=getattr(node, 'line', None), 
+                                       details={'var': node.var})
         self.used_variables.add(node.var)
 
         # Verificar se variável de controle foi declarada
@@ -649,6 +658,7 @@ class SemanticAnalyzer:
 
     def visit_PrintNode(self, node):
         """Analisa comando PRINT para saída de dados."""
+        self.symbol_table.add_statement('PRINT', line=getattr(node, 'line', None))
         self.visit(node.expression)
         return None
 
