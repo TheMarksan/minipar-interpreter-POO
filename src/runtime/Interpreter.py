@@ -485,8 +485,33 @@ class Interpreter:
         prompt = ""
         if node.prompt:
             prompt = str(self.evaluate_expression(node.prompt))
-        
-        value = input(prompt)
+
+        # Allow injection of a custom input provider (used by the web bridge).
+        # If a provider exists, use it and if it fails, return an empty string
+        # instead of falling back to builtin input() which may raise EOFError
+        # when running headless on a server.
+        if hasattr(self, 'input_provider') and callable(self.input_provider):
+            try:
+                # Debug: show that provider will be used
+                try:
+                    print(f"[Interpreter] input called. prompt='{prompt}'. Using input_provider: {getattr(self, 'input_provider', None)}")
+                except Exception:
+                    pass
+                value = self.input_provider(prompt)
+            except Exception as e:
+                # Provider failed; log (via print) and provide empty string so
+                # execution can continue without blocking on stdin.
+                try:
+                    print(f"[Interpreter] input_provider raised: {e}")
+                except Exception:
+                    pass
+                value = ''
+        else:
+            try:
+                value = input(prompt)
+            except EOFError:
+                # No stdin available; behave like empty input rather than crash
+                value = ''
         
         try:
             if '.' in value:

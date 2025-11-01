@@ -1,82 +1,158 @@
- :root{
-      --bg:#0f1724;
-      --card:#0b1220cc;
-      --glass: rgba(255,255,255,0.03);
-      --accent:#7c5cff;
-      --accent-2:#00d4ff;
-      --muted: #9aa4b2;
-      --success: #76e7a6;
-      --danger:#ff6b6b;
-      --mono: "Fira Code", ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace;
-    }
-    *{box-sizing:border-box}
-    html,body{height:100%;margin:0;font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; background: linear-gradient(180deg,#071025 0%, #071827 100%); color:#e6eef6}
+:root{
+  --bg:#0f1724;
+  --card:#0b1220cc;
+  --glass: rgba(255,255,255,0.03);
+  --accent:#7c5cff;
+  --accent-2:#00d4ff;
+  --muted: #9aa4b2;
+  --success: #76e7a6;
+  --danger:#ff6b6b;
+  --mono: "Fira Code", ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace;
+}
 
-    .app{
-      max-width:1200px;margin:28px auto;padding:28px;display:grid;grid-template-columns:1fr 420px;gap:20px;align-items:start;
-    }
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; background: linear-gradient(180deg,#071025 0%, #071827 100%); color:#e6eef6}
 
-    header{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
-    .title{display:flex;gap:12px;align-items:center}
-    .logo{width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px;color:white;box-shadow:0 6px 20px rgba(124,92,255,0.18)}
-    h1{margin:0;font-size:20px}
-    p.lead{margin:0;color:var(--muted);font-size:13px}
+.app{
+  max-width:1200px;margin:28px auto;padding:28px;display:grid;grid-template-columns:1fr 420px;gap:20px;align-items:start;
+  /* Previne crescimento horizontal quando o editor tem linhas muito longas */
+  overflow-x: hidden;
+}
 
-    /* Editor Card */
-    .card{
-      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-      border-radius:14px;padding:14px;border:1px solid rgba(255,255,255,0.04);box-shadow: 0 8px 30px rgba(2,6,23,0.6);
-    }
+header{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.title{display:flex;gap:12px;align-items:center}
+.logo{width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px;color:white;box-shadow:0 6px 20px rgba(124,92,255,0.18)}
+h1{margin:0;font-size:20px}
+p.lead{margin:0;color:var(--muted);font-size:13px}
 
-    .editor{
-      display:flex;flex-direction:column;height:640px;
-    }
+/* Editor Card */
+.card{
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  border-radius:14px;padding:14px;border:1px solid rgba(255,255,255,0.04);box-shadow: 0 8px 30px rgba(2,6,23,0.6);
+}
 
-    .toolbar{display:flex;align-items:center;gap:8px;margin-bottom:10px}
-    .btn{background:var(--glass);border:1px solid rgba(255,255,255,0.04);padding:8px 12px;border-radius:10px;color:var(--muted);cursor:pointer;font-weight:600;font-size:13px}
-    .btn:hover{color:white}
-    .btn.primary{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:white;border:none;box-shadow:0 8px 30px rgba(124,92,255,0.12)}
-    .btn.ghost{background:transparent;border:1px dashed rgba(255,255,255,0.03)}
+.editor{
+  display:flex;flex-direction:column;height:640px;
+}
 
-    .split{display:grid;grid-template-rows:1fr auto;gap:10px;flex:1;}
+.toolbar{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.toolbar{flex-wrap:wrap}
+.btn{background:var(--glass);border:1px solid rgba(255,255,255,0.04);padding:8px 12px;border-radius:10px;color:var(--muted);cursor:pointer;font-weight:600;font-size:13px}
+.btn:hover{color:white}
+.btn.primary{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:white;border:none;box-shadow:0 8px 30px rgba(124,92,255,0.12)}
+.btn.ghost{background:transparent;border:1px dashed rgba(255,255,255,0.03)}
 
-    /* Code area */
-    .codewrap{display:flex;gap:0;height:100%;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,0.03)}
-    .gutter{width:48px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));padding:12px 8px;color:var(--muted);font-family:var(--mono);font-size:13px;text-align:right;user-select:none}
-    textarea.code{flex:1;background:transparent;border:0;padding:14px 16px;font-family:var(--mono);font-size:14px;color:#e6eef6;resize:none;outline:none;height:100%;line-height:1.45}
+.split{display:grid;grid-template-rows:1fr auto;gap:10px;flex:1;}
 
-    /* Right column */
-    .right{display:flex;flex-direction:column;gap:12px}
+/* Área de código */
+.codewrap{display:flex;gap:0;height:100%;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,0.03);min-width:0;max-width:100%}
+/* Garante que textarea não force o layout e seja scrollável dentro do container */
+.codewrap .code{min-width:0;max-height:100%;overflow:auto;display:block}
 
-    .panel{padding:12px;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03)}
+/* Previne que o conteúdo do editor expanda o layout horizontalmente
+   e força scroll interno quando o conteúdo é grande */
+.codewrap{overflow:hidden;max-width:100%}
+.codewrap > .CodeMirror{flex:1;height:100% !important;width:100%;min-width:0;box-sizing:border-box;overflow:hidden;max-width:100%}
+.codewrap .CodeMirror-scroll{height:100% !important;overflow:auto}
+.CodeMirror pre{white-space:pre;overflow-wrap:normal;word-break:normal;max-width:100%}
+.CodeMirror-linewrap pre{white-space:pre-wrap}
 
-    .output{
-      height:300px;overflow:auto;padding:12px;border-radius:10px;background:linear-gradient(180deg, rgba(8,12,20,0.6), rgba(8,12,20,0.4));border:1px solid rgba(255,255,255,0.02);font-family:var(--mono);font-size:13px;color:var(--muted);
-    }
+/* Garante que tokens longos não forcem expansão permitindo scroll horizontal */
+.CodeMirror pre{display:block;overflow-x:auto}
 
-    .tokens{display:flex;flex-direction:column;gap:8px}
-    .token-row{display:flex;gap:8px;align-items:center}
-    .chip{padding:6px 8px;border-radius:8px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.03);font-size:12px}
+/* Fundo sutil com linhas por linha para emular editor de código */
+textarea.code{
+  background-image: linear-gradient(transparent 0 calc(1.45em - 1px), rgba(255,255,255,0.01) calc(1.45em - 1px) 1.45em);
+  background-size: 100% 1.45em;
+  line-height:1.45em;
+}
+.gutter{width:48px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));padding:12px 8px;color:var(--muted);font-family:var(--mono);font-size:13px;text-align:right;user-select:none}
+textarea.code{flex:1;background:transparent;border:0;padding:14px 16px;font-family:var(--mono);font-size:14px;color:#e6eef6;resize:none;outline:none;height:100%;line-height:1.45}
+/* Textarea fallback também deve ter scroll interno e não expandir a página */
+textarea.code{overflow:auto;white-space:pre;word-break:normal;word-wrap:normal}
 
-    footer{grid-column:1/-1;margin-top:14px;color:var(--muted);font-size:13px;text-align:center}
+/* Estilos de tema do editor de código */
+.code-light{
+  background: linear-gradient(180deg,#fbfdff,#f3f6fb);
+  color: #0b1220;
+  box-shadow: inset 0 1px 0 rgba(0,0,0,0.02);
+}
+.code-light::selection{ background: rgba(124,92,255,0.12) }
 
-    /* responsive */
-    @media (max-width:980px){
-      .app{grid-template-columns:1fr;padding:16px}
-      .right{order:2}
-      .editor{order:1}
-      .editor{height:520px}
-    }
+.code-dark{
+  background: linear-gradient(180deg, rgba(8,12,20,0.6), rgba(8,12,20,0.4));
+  color: #e6eef6;
+}
+.code-dark::selection{ background: rgba(124,92,255,0.12) }
 
-    /* small helpers */
-    .meta{font-size:12px;color:var(--muted)}
-    .kbd{background:rgba(255,255,255,0.03);padding:6px 8px;border-radius:6px;font-family:var(--mono);font-size:12px;color:var(--muted)}
+/* Faz CodeMirror preencher o container para que fundo e destaque cubram toda área */
+.codewrap > .CodeMirror{ flex:1; height:100% !important; width:100%; border:0; background:transparent; box-sizing:border-box }
+.codewrap .CodeMirror-scroll{ height:100% !important; overflow:auto }
+.codewrap .CodeMirror pre{ background:transparent; box-sizing:border-box }
 
-    /* result coloring */
-    .tok-keyword{color:var(--accent);}
-    .tok-ident{color:#9ad0ff}
-    .tok-number{color:#ffd88a}
-    .tok-string{color:#ffb1d6}
-    .tok-operator{color:#c7f7ff}
-    .err{color:var(--danger);font-weight:700}
-    .ok{color:var(--success);font-weight:700}
+/* Quando CodeMirror não está presente, mantém estilo da textarea consistente */
+.codewrap textarea.code{height:100%}
+
+/* Evita que conteúdo CodeMirror expanda layout: garante que possa encolher e ter scroll interno */
+.codewrap .CodeMirror{ min-width:0; max-width:100%; box-sizing:border-box }
+.CodeMirror pre{ white-space: pre; word-break: normal; }
+.CodeMirror-wrap pre{ white-space: pre-wrap; }
+
+.exec-input-wrapper input.exec-input{ border:1px solid rgba(255,255,255,0.03); border-radius:8px }
+
+/* Estilos de select adaptados ao tema */
+body.light-theme select, body.light-theme .btn, body.light-theme .toolbar .btn{ background: #ffffff; color: #0b1220; border-color: rgba(11,18,32,0.06) }
+body.dark-theme select, body.dark-theme .btn, body.dark-theme .toolbar .btn{ background: rgba(255,255,255,0.02); color: #e6eef6; border-color: rgba(255,255,255,0.03) }
+
+/* Melhora contraste do dropdown select no tema escuro */
+select { appearance: none; -webkit-appearance: none; -moz-appearance: none; }
+
+/* Coluna direita */
+.right{display:flex;flex-direction:column;gap:12px}
+
+.panel{padding:12px;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03)}
+
+.panel .hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.panel .hdr strong{font-size:13px}
+.toggle{background:transparent;border:0;color:var(--muted);cursor:pointer;padding:6px 8px;border-radius:8px}
+.toggle:hover{color:white}
+
+.output{
+  max-height:320px;overflow:auto;padding:12px;border-radius:10px;background:linear-gradient(180deg, rgba(8,12,20,0.6), rgba(8,12,20,0.4));border:1px solid rgba(255,255,255,0.02);font-family:var(--mono);font-size:13px;color:var(--muted);white-space:pre-wrap;word-break:break-word;
+}
+
+/* Saída pré-formatada (AST) */
+.output-pre{
+  display:block; white-space:pre; font-family:var(--mono); font-size:13px; color:var(--muted);
+  max-height:320px; overflow:auto; padding:12px; border-radius:10px; background:transparent; border:0; margin:0;
+}
+
+/* Painel colapsado: esconde conteúdo suavemente */
+.panel.collapsed .output{max-height:0;padding-top:0;padding-bottom:0;overflow:hidden}
+
+.tokens{display:flex;flex-direction:column;gap:8px}
+.token-row{display:flex;gap:8px;align-items:center}
+.chip{padding:6px 8px;border-radius:8px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.03);font-size:12px}
+
+footer{grid-column:1/-1;margin-top:14px;color:var(--muted);font-size:13px;text-align:center}
+
+/* Responsivo */
+@media (max-width:980px){
+  .app{grid-template-columns:1fr;padding:16px}
+  .right{order:2}
+  .editor{order:1}
+  .editor{height:520px}
+}
+
+/* Helpers auxiliares */
+.meta{font-size:12px;color:var(--muted)}
+.kbd{background:rgba(255,255,255,0.03);padding:6px 8px;border-radius:6px;font-family:var(--mono);font-size:12px;color:var(--muted)}
+
+/* Cores de resultado */
+.tok-keyword{color:var(--accent);}
+.tok-ident{color:#9ad0ff}
+.tok-number{color:#ffd88a}
+.tok-string{color:#ffb1d6}
+.tok-operator{color:#c7f7ff}
+.err{color:var(--danger);font-weight:700}
+.ok{color:var(--success);font-weight:700}

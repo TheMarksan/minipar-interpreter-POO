@@ -1,7 +1,5 @@
 
-# Declaração dos canais de comunicação (canais apenas para comunicação; threads são criadas pelo bloco PAR)
-# request: Cliente -> Servidor (envia operação e valores)
-# response: Servidor -> Cliente (retorna resultado)
+
 c_channel request;
 c_channel response;
 

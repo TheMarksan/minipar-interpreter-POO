@@ -1,263 +1,213 @@
-document.addEventListener("DOMContentLoaded", () => {
-// Editor helpers
-    const codeEl = document.getElementById('code');
-    const gutter = document.getElementById('gutter');
-    const runBtn = document.getElementById('runBtn');
-    const clearBtn = document.getElementById('clearBtn');
-    const sampleBtn = document.getElementById('sampleBtn');
-    const lexOut = document.getElementById('lexOutput');
-    const semOut = document.getElementById('semOutput');
-    const tokCount = document.getElementById('tokCount');
-    const status = document.getElementById('status');
-    const exportBtn = document.getElementById('exportBtn');
-    const themeSel = document.getElementById('themeSel');
+document.addEventListener('DOMContentLoaded', () => {
+  const codeEl = document.getElementById('code');
+  const gutter = document.getElementById('gutter');
+  const runBtn = document.getElementById('runBtn');
+  const clearBtn = document.getElementById('clearBtn');
+  const sampleBtn = document.getElementById('sampleBtn');
+  const execOut = document.getElementById('execOutput');
+  const lexOut = document.getElementById('lexOutput');
+  const semOut = document.getElementById('semOutput');
+  const tacOut = document.getElementById('tacOutput');
+  const tokCount = document.getElementById('tokCount');
+  const status = document.getElementById('status');
+  const exportBtn = document.getElementById('exportBtn');
+  const themeSel = document.getElementById('themeSel');
+  let currentRunId = null;
 
-    // Update line numbers
-    function updateGutter(){
-      const lines = codeEl.value.split('\n').length || 1;
-      let s='';
-      for(let i=1;i<=lines;i++) s += i + '\n';
-      gutter.textContent = s;
-    }
-    codeEl.addEventListener('input', updateGutter);
-    codeEl.addEventListener('scroll', () => { gutter.scrollTop = codeEl.scrollTop });
+  function getEditorValue(){ return (window.editorInstance && window.editorInstance.getValue) ? window.editorInstance.getValue() : codeEl.value }
+  function setEditorValue(v){ if(window.editorInstance && window.editorInstance.setValue) window.editorInstance.setValue(v); else codeEl.value = v }
+  function updateGutter(){
+    // Preferir lineCount do CodeMirror se presente
+    const lines = (window.editorInstance && window.editorInstance.lineCount) ? window.editorInstance.lineCount() : getEditorValue().split('\n').length || 1;
+    let s=''; for(let i=1;i<=lines;i++) s += i + '\n';
+    if(gutter) gutter.textContent = s;
+  }
 
-    // Shortcuts
-    window.addEventListener('keydown', (e)=>{
-      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter'){
-        e.preventDefault(); run();
-      }
-    })
+  // Exemplo padrão e exemplos (com SEQ quando apropriado)
+  const sample = `// Exemplo MiniPar-like\nvar x = 10;\nprint(x);\n`;
+  const examples = {
+    'Print & Arithmetic': `SEQ {\nprint("Soma: " + (1 + 2) + "\\n");\nprint("Mult: " + (2 * 3) + "\\n");\n}\n`,
+    'Variables & If': `SEQ {\nINT x;\nINT y;\nx = 10;\ny = 5;\nif (x > y) { print("x maior\\n"); } else { print("x menor\\n"); }\n}\n`,
+    'Loops & Functions': `SEQ {\nINT soma(INT a, INT b) { return a + b; }\nINT i;\nfor i = 0; i < 3; i = i + 1 { print("i=" + i + "\\n"); }\nprint("soma 3+4 = " + soma(3,4) + "\\n");\n}\n`,
+    'Channels Send/Receive': `SEQ {\n// canal_resultados precisa existir no runtime\ncanal_resultados.send(42);\nprint("Sent 42\\n");\n}\n`,
+    'Hello World (threads)': `SEQ {\nvoid f1(){ int i; i=0; while i != 3 { print("A:"+i+"\\n"); i = i + 1; } }\nvoid f2(){ int j; j=3; while j != 0 { print("B:"+j+"\\n"); j = j - 1; } }\npar { f1(); f2(); }\n}\n`,
+    'Threads - cliente/servidor (programa2)': `SEQ {\n// Demo simplificado cliente/servidor (use arquivo de teste completo)\ncanal_resultados.send(10);\nprint("Enviado 10 para canal\\n");\n}\n`
+  };
 
-    // Simple sample code
-    const sample = `// Exemplo MiniPar-like\nvar x = 10;\nvar s = "olá";\nif (x > 5) {\n  x = x + 1;\n}\nprint(x);\nprint(s);\nlet y = x + z; // z não declarado (semântica)\n`;
-
-    sampleBtn.addEventListener('click', ()=>{ codeEl.value = sample; updateGutter(); status.textContent = 'Exemplo carregado'; setTimeout(()=>status.textContent='Pronto',800)});
-    clearBtn.addEventListener('click', ()=>{ codeEl.value=''; updateGutter(); lexOut.textContent=''; semOut.textContent=''; tokCount.textContent='0'; status.textContent='Limpo'; setTimeout(()=>status.textContent='Pronto',600)});
-
-    // Theme toggle (very simple)
-    themeSel.addEventListener('change', (e)=>{
-      if(e.target.value === 'light'){
-        document.documentElement.style.setProperty('--bg','#f5f7fb');
-        document.documentElement.style.setProperty('--muted','#4b5563');
-        document.body.style.background = 'linear-gradient(180deg,#f8fafc,#eef2ff)';
-        document.querySelectorAll('.card, .panel').forEach(n=>n.style.background='white');
-        document.querySelectorAll('.code').forEach(n=>n.style.color='#0b1220');
-      } else {
-        document.documentElement.style.removeProperty('--bg');
-        document.body.style.background = 'linear-gradient(180deg,#071025,#071827)';
-        document.querySelectorAll('.card, .panel').forEach(n=>n.style.background='linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01))');
-        document.querySelectorAll('.code').forEach(n=>n.style.color='#e6eef6');
-      }
-    })
-
-    // ======== LEXER & SEMANTIC (Front-end demo) ========
-    // This lexer is a lightweight demo for front-end visualization only.
-    // It recognizes: keywords, identifiers, numbers, strings, operators, punctuation and comments.
-
-    const KEYWORDS = new Set(['var','let','if','else','while','for','return','func','print']);
-    const tokenPatterns = [
-      ['WHITESPACE', /^\s+/],
-      ['COMMENT', /^\/\/.*/],
-      ['STRING', /^"([^"\\]|\\.)*"/],
-      ['NUMBER', /^\d+(?:\.\d+)?/],
-      ['IDENT', /^[A-Za-z_][A-Za-z0-9_]*/],
-      ['OP', /^==|!=|<=|>=|=>|\+|\-|\*|\/|=|<|>/],
-      ['PUNC', /^[\(\)\{\}\[\];,\.]/],
-    ];
-
-    function lex(input){
-      let i=0; const tokens=[];
-      while(i < input.length){
-        const slice = input.slice(i);
-        let matched=false;
-        for(const [type, pat] of tokenPatterns){
-          const m = slice.match(pat);
-          if(m){
-            matched=true; const txt = m[0];
-            if(type === 'WHITESPACE'){
-              // skip but keep newlines for position
-              i += txt.length; break;
-            }
-            if(type === 'COMMENT'){
-              tokens.push({type:'COMMENT', value:txt}); i+=txt.length; break;
-            }
-            if(type === 'IDENT'){
-              const kind = KEYWORDS.has(txt) ? 'KEYWORD' : 'IDENT';
-              tokens.push({type:kind, value:txt}); i+=txt.length; break;
-            }
-            tokens.push({type:type, value:txt}); i+=txt.length; break;
-          }
-        }
-        if(!matched){
-          // unknown char -> produce an error token and advance 1
-          tokens.push({type:'UNKNOWN', value:input[i]}); i++;
-        }
-      }
-      return tokens;
-    }
-
-    // Semantic: very simple one-pass symbol table for var/let declarations and use-before-declare
-    function semanticCheck(tokens){
-      const messages = [];
-      const symbols = new Map(); // name -> {declared:true, lastValueType: 'number'|'string'|null}
-
-      // helper to peek next non-comment/whitespace token
-      function nextNonComment(idx){
-        let j = idx+1; while(j < tokens.length && (tokens[j].type === 'COMMENT')) j++; return tokens[j] || null;
-      }
-
-      for(let i=0;i<tokens.length;i++){
-        const t = tokens[i];
-        if(t.type === 'KEYWORD' && (t.value === 'var' || t.value === 'let')){
-          // expect identifier next
-          const nx = nextNonComment(i);
-          if(nx && nx.type === 'IDENT'){
-            const name = nx.value;
-            if(symbols.has(name)){
-              messages.push({kind:'warn', text:`Variável '${name}' já declarada.`});
-            } else {
-              symbols.set(name, {declared:true, type:null});
-              messages.push({kind:'info', text:`Declarada '${name}'`});
-            }
-          } else {
-            messages.push({kind:'err', text:`Esperado identificador após '${t.value}'.`});
-          }
-        }
-        if(t.type === 'IDENT'){
-          // detect usage like IDENT ( ... or IDENT = ... ) — naive
-          const nx = nextNonComment(i);
-          if(nx && nx.type === 'OP' && nx.value === '='){
-            // assignment, try to detect literal type on right
-            // scan ahead for next token that is NUMBER or STRING or IDENT
-            let j=i+1; let found=null;
-            while(j<tokens.length){ if(tokens[j].type==='NUMBER'||tokens[j].type==='STRING'||tokens[j].type==='IDENT'){ found=tokens[j]; break; } j++; }
-            if(found){
-              if(!symbols.has(t.value)){
-                messages.push({kind:'err', text:`Atribuição a variável não declarada '${t.value}'.`});
-              } else {
-                const st = symbols.get(t.value);
-                const newType = found.type==='NUMBER'? 'number' : (found.type==='STRING'? 'string' : 'ident');
-                if(st.type && st.type !== newType && newType !== 'ident'){
-                  messages.push({kind:'warn', text:`Possível mudança de tipo em '${t.value}' de ${st.type} para ${newType}.`});
-                }
-                if(newType !== 'ident') st.type = newType;
-                symbols.set(t.value, st);
-              }
-            }
-          } else {
-            // usage context - check declared
-            // avoid counting declarations (handled above)
-            // if previous token was keyword var/let ignore
-            const prev = tokens[i-1];
-            if(!(prev && prev.type==='KEYWORD' && (prev.value==='var' || prev.value==='let'))){
-              if(!symbols.has(t.value)){
-                messages.push({kind:'err', text:`Uso de variável não declarada '${t.value}'.`});
-              }
-            }
-          }
-        }
-        if(t.type === 'UNKNOWN'){
-          messages.push({kind:'err', text:`Caractere desconhecido: '${t.value}'`});
-        }
-      }
-
-      return {messages, symbols};
-    }
-
-    // Render tokens to the lexOutput area
-    function renderTokens(tokens){
-      tokCount.textContent = tokens.length;
-      if(tokens.length === 0){ lexOut.textContent = 'Nenhum token.'; return; }
-      // Build HTML list
-      const container = document.createElement('div');
-      container.className = 'tokens';
-      tokens.forEach((tk, idx)=>{
-        const row = document.createElement('div'); row.className = 'token-row';
-        const idxEl = document.createElement('div'); idxEl.className='chip'; idxEl.textContent = idx+1;
-        const typeEl = document.createElement('div'); typeEl.className='chip'; typeEl.textContent = tk.type;
-        const valEl = document.createElement('div'); valEl.textContent = tk.value; valEl.style.fontFamily='var(--mono)';
-        // color by type
-        if(tk.type === 'KEYWORD') valEl.className='tok-keyword';
-        if(tk.type === 'IDENT') valEl.className='tok-ident';
-        if(tk.type === 'NUMBER') valEl.className='tok-number';
-        if(tk.type === 'STRING') valEl.className='tok-string';
-        if(tk.type === 'OP') valEl.className='tok-operator';
-        if(tk.type === 'UNKNOWN') valEl.className='err';
-
-        row.appendChild(idxEl); row.appendChild(typeEl); row.appendChild(valEl);
-        container.appendChild(row);
-      });
-      lexOut.innerHTML = '';
-      lexOut.appendChild(container);
-    }
-
-    function renderSemantic(res){
-      semOut.innerHTML = '';
-      if(res.messages.length === 0){ semOut.textContent = 'Sem problemas aparentes.'; return; }
-      const ul = document.createElement('div'); ul.style.display='flex'; ul.style.flexDirection='column'; ul.style.gap='8px';
-      res.messages.forEach(m =>{
-        const el = document.createElement('div');
-        el.textContent = (m.kind==='err'? 'Erro: ' : (m.kind==='warn'? 'Aviso: ' : 'Info: ')) + m.text;
-        el.className = m.kind==='err'? 'err' : (m.kind==='warn'? 'meta' : '');
-        ul.appendChild(el);
-      });
-      semOut.appendChild(ul);
-    }
-
-    // Run pipeline
-    async function interpretarCodigo() {
-    const code = document.getElementById("code").value;
-
-    // Mostra status temporário
-    document.getElementById("lexOutput").textContent = "🔄 Processando...";
-    document.getElementById("semOutput").textContent = "🔄 Processando...";
-    document.getElementById("astOutput").textContent = "🔄 Processando...";
-
-    try {
-        const response = await fetch("http://127.0.0.1:8000/interpretar", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ code: codeEl.value }),
-        });
-
-        const data = await response.json();
-
-        if (data.erro) {
-            document.getElementById("lexOutput").textContent = "❌ Erro: " + data.erro;
-            document.getElementById("semantico").textContent = "";
-            document.getElementById("ast").textContent = "";
-            return;
-        }
-
-        // Mostra os resultados recebidos do FastAPI
-        document.getElementById("lexOutput").textContent =
-            (data.lexico && data.lexico.join("\n")) || "Nenhum token encontrado";
-
-        document.getElementById("semOutput").textContent =
-            data.semantico || "Nenhuma análise semântica realizada.";
-        
-
-        document.getElementById("astOutput").textContent =
-            data.ast || "Nenhuma árvore sintática gerada.";
-    } catch (error) {
-        console.error("Erro de conexão:", error);
-        document.getElementById("lexOutput").textContent = "❌ Erro ao conectar com o servidor FastAPI.";
-        document.getElementById("semOutput").textContent = "";
-        document.getElementById("astOutput").textContent = "";
-    }
-}
-
-    runBtn.addEventListener('click', interpretarCodigo);
-
-    exportBtn.addEventListener('click', ()=>{
-      // copy token JSON to clipboard
-      const tokens = lex(codeEl.value);
-      navigator.clipboard.writeText(JSON.stringify(tokens, null, 2)).then(()=>{
-        status.textContent = 'Tokens copiados'; setTimeout(()=>status.textContent='Pronto',800)
-      }).catch(()=>{ status.textContent='Erro ao copiar' })
-    })
-
-    // init
-    codeEl.value = sample; updateGutter();
+  // Carregar exemplo
+  sampleBtn.addEventListener('click', ()=>{
+    const sel = document.getElementById('exampleSel');
+    if(sel && sel.value && examples[sel.value]){ setEditorValue(examples[sel.value]); status.textContent = `Exemplo: ${sel.value} carregado`; }
+    else { setEditorValue(sample); status.textContent = 'Exemplo carregado'; }
+    updateGutter(); setTimeout(()=>status.textContent='Pronto',800);
   });
+
+  clearBtn.addEventListener('click', ()=>{ setEditorValue(''); updateGutter(); execOut.textContent=''; lexOut.textContent=''; semOut.textContent=''; tokCount.textContent='0'; status.textContent='Limpo'; setTimeout(()=>status.textContent='Pronto',600)});
+
+  // Alternar tema (aplicar classe ao textarea)
+  function applyTheme(theme){
+    // theme = 'light' ou 'dark'
+    if(theme === 'light'){
+      document.body.classList.remove('dark-theme'); document.body.classList.add('light-theme');
+      if(window.editorInstance) window.editorInstance.setOption('theme','default');
+    } else {
+      document.body.classList.remove('light-theme'); document.body.classList.add('dark-theme');
+      if(window.editorInstance) window.editorInstance.setOption('theme','dracula');
+    }
+  }
+  themeSel.addEventListener('change', (e)=>{ applyTheme(e.target.value); });
+
+  // Executar -> enviar para backend
+  async function interpretarCodigo(){
+    const code = getEditorValue();
+    execOut.textContent = '🔄 Executando...';
+    lexOut.textContent = '🔄 Processando...'; semOut.textContent = '🔄 Processando...';
+    try{
+      const resp = await fetch('http://127.0.0.1:8000/interpretar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code})});
+      const data = await resp.json();
+      if(data.erro){ execOut.textContent=''; lexOut.textContent='❌ '+data.erro; semOut.textContent=''; return; }
+      // tokens
+      let lexText = '';
+      if(Array.isArray(data.lexico)){
+        lexText = data.lexico.map(t => (typeof t === 'string' ? t : (t.type||t.t||'') + ' ' + (t.lexeme||t.v||t.value||''))).join('\n');
+      } else if(typeof data.lexico === 'string') lexText = data.lexico;
+      lexOut.textContent = lexText || 'Nenhum token.';
+      // semantico
+      semOut.textContent = data.semantico ? (typeof data.semantico === 'string' ? data.semantico : JSON.stringify(data.semantico,null,2)) : 'Nenhuma análise semântica.';
+      // ast
+      document.getElementById('astOutput').textContent = data.ast || 'Nenhuma árvore sintática gerada.';
+      // tac (código de 3 endereços) — backend pode fornecer com chaves diferentes
+      if(tacOut){
+        const tacText = data.tac || data.tac_code || data.threeAddress || data.three_address || data.three_address_code || '';
+        tacOut.textContent = tacText ? (typeof tacText === 'string' ? tacText : JSON.stringify(tacText,null,2)) : 'TAC não fornecido pelo backend.';
+      }
+      // exec
+      const execText = data.exec || data.execucao || data.stdout || data.output || '';
+      execOut.textContent = (typeof execText === 'string' ? execText : JSON.stringify(execText,null,2)) || '(Nenhuma saída de execução fornecida pelo backend)';
+      // Tratamento de entrada interativa: se backend indica que está esperando entrada, mostrar prompt
+      if(data.waiting_for_input){
+        currentRunId = data.run_id || data.runId || null;
+        showInputPrompt(currentRunId, data.prompt || '');
+      } else {
+        removeInputPrompt();
+        currentRunId = null;
+      }
+    }catch(err){ console.error(err); execOut.textContent=''; lexOut.textContent='❌ Erro ao conectar com o servidor.'; semOut.textContent=''; document.getElementById('astOutput').textContent=''; }
+  }
+
+  runBtn.addEventListener('click', interpretarCodigo);
+  // Inicializar CodeMirror (se disponível) e definir conteúdo inicial + tema
+  if(window.CodeMirror){
+    // Criar instância do editor e expor para outros helpers
+    window.editorInstance = CodeMirror.fromTextArea(codeEl, {lineNumbers:true, mode:'text/x-csrc', theme:'dracula', indentUnit:2, autofocus:true});
+    // Esconder o gutter antigo (usamos numeração de linhas do CodeMirror)
+    if(gutter) gutter.style.display = 'none';
+    // Quando conteúdo do CodeMirror muda, atualizar saídas como gutter de contagem de tokens
+    window.editorInstance.on('change', ()=>{ updateGutter(); });
+  }
+  // Definir conteúdo inicial
+  setEditorValue(sample); updateGutter();
+  // Aplicar tema inicial de acordo com seletor
+  applyTheme(themeSel && themeSel.value ? themeSel.value : 'dark');
+
+  // Handlers de toggle para colapsar/expandir painéis (restaurar funcionalidade)
+  document.querySelectorAll('.toggle').forEach(btn=>{
+    btn.addEventListener('click', (e)=>{
+      const panel = btn.closest('.panel');
+      if(!panel) return;
+      const collapsed = panel.classList.toggle('collapsed');
+      btn.textContent = collapsed ? '▸' : '▾';
+      const out = panel.querySelector('.output');
+      if(out) out.setAttribute('aria-hidden', collapsed ? 'true' : 'false');
+    });
+  });
+
+  // Garantir que painéis do lado direito estejam visíveis no carregamento (corrige casos onde
+  // painéis ficaram colapsados ou toggles ficaram dessincronizados)
+  (function restoreRightPanels(){
+    const panels = document.querySelectorAll('aside.right .panel');
+    panels.forEach(p => {
+      p.classList.remove('collapsed');
+      const out = p.querySelector('.output');
+      if(out) out.setAttribute('aria-hidden', 'false');
+      const toggle = p.querySelector('.toggle');
+      if(toggle) toggle.textContent = '▾';
+    });
+  })();
+
+  // Forçar garantia de que coluna direita e conteúdo dos painéis estejam visíveis (cobre casos
+  // onde CSS ou JS anterior acidentalmente definiu display:none). Isso é seguro e sem efeito
+  // se os elementos já estiverem visíveis
+  const rightCol = document.querySelector('aside.right');
+  if(rightCol){
+    rightCol.style.display = rightCol.style.display || 'flex';
+    rightCol.style.flexDirection = rightCol.style.flexDirection || 'column';
+  }
+  document.querySelectorAll('aside.right .panel').forEach(p => {
+    p.style.display = p.style.display || 'block';
+    const out = p.querySelector('.output');
+    if(out){ out.style.display = out.style.display || 'block'; out.style.visibility = 'visible'; }
+  });
+
+  // Helpers de UI de entrada para programas interativos
+  function showInputPrompt(runId, promptText){
+    // Criar uma pequena área de entrada dentro de execOut
+    removeInputPrompt();
+    const wrapper = document.createElement('div');
+    wrapper.className = 'exec-input-wrapper';
+    wrapper.style.display = 'flex';
+    wrapper.style.gap = '8px';
+    wrapper.style.marginTop = '8px';
+
+    const label = document.createElement('div');
+    label.textContent = promptText || 'Entrada requerida:';
+    label.className = 'meta';
+    label.style.alignSelf = 'center';
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'exec-input';
+    input.style.flex = '1';
+    input.style.padding = '8px';
+    input.placeholder = 'Digite a entrada e pressione Enviar';
+
+    const btn = document.createElement('button');
+    btn.className = 'btn primary';
+    btn.textContent = 'Enviar';
+    btn.addEventListener('click', ()=>{
+      const val = input.value || '';
+      sendRunInput(runId, val);
+    });
+
+    wrapper.appendChild(label);
+    wrapper.appendChild(input);
+    wrapper.appendChild(btn);
+
+    execOut.appendChild(wrapper);
+    // Focar no input
+    setTimeout(()=>input.focus(),50);
+  }
+
+  function removeInputPrompt(){
+    const existing = execOut.querySelector('.exec-input-wrapper');
+    if(existing) existing.remove();
+  }
+
+  async function sendRunInput(runId, value){
+    if(!runId) return;
+    try{
+      const resp = await fetch('http://127.0.0.1:8000/interpretar/input',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({run_id: runId, input: value})});
+      const data = await resp.json();
+      // Atualizar saída de execução e estado de espera
+      execOut.textContent = data.exec || data.stdout || execOut.textContent;
+      if(data.waiting_for_input){
+        showInputPrompt(runId, data.prompt || 'Entrada:');
+      } else {
+        removeInputPrompt();
+        currentRunId = null;
+      }
+    }catch(err){ console.error('Erro enviando input', err); }
+  }
+
+  // Sem painel de entrada externo: usar prompt exec inline (showInputPrompt) para entrada interativa
+});
