@@ -415,6 +415,43 @@ p.lead{margin:0;color:var(--muted);font-size:13px}
   box-shadow: 0 0 0 3px rgba(124, 92, 255, 0.1);
 }
 
+/* Modal body para editor de código */
+.modal-body-code {
+  padding: 0 !important;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-body-code .CodeMirror {
+  height: 100% !important;
+  min-height: 70vh;
+  font-size: 15px;
+  line-height: 1.6;
+  border-radius: 0 0 16px 16px;
+}
+
+.modal-body-code .CodeMirror-scroll {
+  min-height: 70vh;
+}
+
+/* Ajustar scrollbar do CodeMirror no modal */
+.modal-body-code .CodeMirror-vscrollbar::-webkit-scrollbar {
+  width: 12px;
+}
+
+.modal-body-code .CodeMirror-vscrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.modal-body-code .CodeMirror-vscrollbar::-webkit-scrollbar-thumb {
+  background: rgba(124, 92, 255, 0.3);
+  border-radius: 6px;
+}
+
+.modal-body-code .CodeMirror-vscrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(124, 92, 255, 0.5);
+}
+
 /* Scrollbar para modal */
 .modal-body::-webkit-scrollbar {
   width: 12px;

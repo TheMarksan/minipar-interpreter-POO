@@ -223,9 +223,12 @@
     <div class="modal-content">
       <div class="modal-header">
         <h2>📝 Editor de Código - Visualização Ampliada</h2>
-        <button class="modal-close" id="codeModalClose" title="Fechar">&times;</button>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="btn" id="codeModalSave" title="Aplicar mudanças ao editor">💾 Salvar</button>
+          <button class="modal-close" id="codeModalClose" title="Fechar">&times;</button>
+        </div>
       </div>
-      <div class="modal-body">
+      <div class="modal-body modal-body-code">
         <textarea id="codeModalContent" class="code-modal-textarea" spellcheck="false"></textarea>
       </div>
     </div>
