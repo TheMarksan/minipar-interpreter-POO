@@ -302,3 +302,74 @@ class BraceInitNode(ASTNode):
     """Representa inicialização com chaves: {val1, val2, ...}."""
     def __init__(self, values):
         self.values = values  # Lista de valores
+
+# Função para serializar AST em formato JSON
+def ast_to_dict(node):
+    """Converte um nó da AST para dicionário (serializável em JSON)."""
+    if node is None:
+        return None
+    
+    result = {
+        'type': type(node).__name__
+    }
+    
+    # Atributos simples (strings, números, booleanos)
+    simple_attrs = [
+        'value', 'name', 'operator', 'text', 'parent', 'class_name', 
+        'type_name', 'var_name', 'identifier', 'method_name', 'object_name',
+        'attribute_name', 'array_name', 'var', 'return_type', 'block_type',
+        'prompt', 'channel', 'is_array', 'is_2d_array', 'attr_name'
+    ]
+    
+    for attr in simple_attrs:
+        if hasattr(node, attr):
+            val = getattr(node, attr)
+            if val is not None:
+                result[attr] = str(val) if not isinstance(val, (bool, int, float)) else val
+    
+    # Atributos que são nós únicos (recursão simples)
+    single_node_attrs = [
+        'condition', 'expression', 'left', 'right', 'operand', 
+        'init_expr', 'increment', 'initial_value', 'index', 'index2',
+        'array_access', 'object_attr_access', 'array_size', 'object'
+    ]
+    
+    for attr in single_node_attrs:
+        if hasattr(node, attr):
+            val = getattr(node, attr)
+            if val is not None:
+                result[attr] = ast_to_dict(val)
+    
+    # Atributos que são listas de nós (recursão em listas)
+    list_attrs = [
+        'children', 'attributes', 'methods', 'parameters', 'body', 
+        'statements', 'arguments', 'values', 'elements', 'variables',
+        'then_body', 'else_body'
+    ]
+    
+    for attr in list_attrs:
+        if hasattr(node, attr):
+            val = getattr(node, attr)
+            if val:
+                if isinstance(val, list):
+                    result[attr] = [ast_to_dict(item) for item in val]
+                else:
+                    # Se não for lista mas existir (ex: then_body pode ser lista ou None)
+                    result[attr] = ast_to_dict(val)
+    
+    # Atributos especiais
+    if hasattr(node, 'array_dimensions') and node.array_dimensions:
+        result['array_dimensions'] = [ast_to_dict(dim) if hasattr(dim, '__class__') and issubclass(dim.__class__, ASTNode) else dim for dim in node.array_dimensions]
+    
+    if hasattr(node, 'channel_info') and node.channel_info:
+        result['channel_info'] = str(node.channel_info)
+    
+    if hasattr(node, 'params') and node.params:
+        # params pode ser lista de tuplas (tipo, nome)
+        if isinstance(node.params, list) and node.params:
+            if isinstance(node.params[0], tuple):
+                result['params'] = [{'type': str(p[0]), 'name': str(p[1])} for p in node.params]
+            else:
+                result['params'] = [ast_to_dict(p) for p in node.params]
+    
+    return result

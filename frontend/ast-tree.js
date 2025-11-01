@@ -142,37 +142,43 @@ class ASTTreeRenderer {
   getNodeType(data, label) {
     if (!data) return 'default';
     
-    const typeMap = {
-      'Program': 'root',
-      'SEQ': 'block',
-      'PAR': 'block',
-      'CLASS': 'class',
-      'Function': 'function',
-      'Method': 'function',
-      'Declaration': 'declaration',
-      'Assignment': 'assignment',
-      'IfNode': 'control',
-      'ForNode': 'control',
-      'WhileNode': 'control',
-      'print': 'io',
-      'return': 'control'
-    };
+    const type = data.type || label || '';
+    const typeLower = type.toLowerCase();
     
-    const labelLower = label.toLowerCase();
-    for (const [key, value] of Object.entries(typeMap)) {
-      if (labelLower.includes(key.toLowerCase())) {
-        return value;
-      }
-    }
+    // Categorias de nós
+    if (typeLower.includes('program')) return 'root';
+    if (typeLower.includes('class')) return 'class';
+    if (typeLower.includes('function') || typeLower.includes('method')) return 'function';
+    if (typeLower.includes('block') || typeLower === 'seq' || typeLower === 'par') return 'block';
     
-    if (data.type) {
-      const typeLower = data.type.toLowerCase();
-      for (const [key, value] of Object.entries(typeMap)) {
-        if (typeLower.includes(key.toLowerCase())) {
-          return value;
-        }
-      }
-    }
+    // Controle de fluxo
+    if (typeLower.includes('if') || typeLower.includes('while') || 
+        typeLower.includes('for') || typeLower.includes('return')) return 'control';
+    
+    // Declarações e atribuições
+    if (typeLower.includes('declaration') || typeLower.includes('attribute')) return 'declaration';
+    if (typeLower.includes('assignment')) return 'assignment';
+    
+    // I/O
+    if (typeLower.includes('print') || typeLower.includes('input') || 
+        typeLower.includes('send') || typeLower.includes('receive')) return 'io';
+    
+    // Operações
+    if (typeLower.includes('binaryop') || typeLower.includes('unaryop') || 
+        typeLower.includes('condition')) return 'operation';
+    
+    // Valores e identificadores
+    if (typeLower.includes('number') || typeLower.includes('string') || 
+        typeLower.includes('identifier')) return 'literal';
+    
+    // Arrays e acesso
+    if (typeLower.includes('array')) return 'array';
+    
+    // Chamadas
+    if (typeLower.includes('call')) return 'call';
+    
+    // Objetos
+    if (typeLower.includes('new') || typeLower.includes('instantiation')) return 'object';
     
     return 'default';
   }
@@ -198,14 +204,37 @@ class ASTTreeRenderer {
     
     const details = [];
     
+    // Informações de identificação
     if (data.name) details.push(`name: ${data.name}`);
     if (data.identifier) details.push(`id: ${data.identifier}`);
+    if (data.var_name) details.push(`var: ${data.var_name}`);
+    if (data.class_name) details.push(`class: ${data.class_name}`);
+    if (data.method_name) details.push(`method: ${data.method_name}`);
+    if (data.object_name) details.push(`obj: ${data.object_name}`);
+    if (data.attribute_name) details.push(`attr: ${data.attribute_name}`);
+    if (data.array_name) details.push(`array: ${data.array_name}`);
+    
+    // Tipos
     if (data.type_name) details.push(`type: ${data.type_name}`);
+    if (data.return_type) details.push(`returns: ${data.return_type}`);
+    if (data.block_type) details.push(`block: ${data.block_type}`);
+    
+    // Operadores e valores
     if (data.operator) details.push(`op: ${data.operator}`);
     if (data.value !== undefined && data.value !== null) {
       const val = typeof data.value === 'string' ? `"${data.value}"` : data.value;
       details.push(`val: ${val}`);
     }
+    
+    // Arrays
+    if (data.is_array) details.push('is_array');
+    if (data.is_2d_array) details.push('is_2d_array');
+    
+    // Outros
+    if (data.parent) details.push(`extends: ${data.parent}`);
+    if (data.text) details.push(`text: "${data.text.substring(0, 30)}..."`);
+    if (data.prompt) details.push(`prompt: "${data.prompt}"`);
+    if (data.channel) details.push(`channel: ${data.channel}`);
     
     return details.length > 0 ? `(${details.join(', ')})` : '';
   }
@@ -218,54 +247,40 @@ class ASTTreeRenderer {
     
     const children = [];
     
-    // Priorizar campos conhecidos
-    if (data.children && Array.isArray(data.children)) {
-      data.children.forEach((child, idx) => {
-        children.push({ data: child, label: `child_${idx}` });
-      });
-    }
+    // Arrays de nós
+    const arrayFields = [
+      'children', 'statements', 'body', 'then_body', 'else_body',
+      'attributes', 'methods', 'parameters', 'arguments', 'values',
+      'elements', 'variables'
+    ];
     
-    if (data.statements && Array.isArray(data.statements)) {
-      data.statements.forEach((stmt, idx) => {
-        children.push({ data: stmt, label: this.formatNodeLabel(stmt, `stmt_${idx}`) });
-      });
-    }
+    arrayFields.forEach(field => {
+      if (data[field] && Array.isArray(data[field]) && data[field].length > 0) {
+        data[field].forEach((item, idx) => {
+          if (item && typeof item === 'object') {
+            const label = this.formatNodeLabel(item, `${field}_${idx}`);
+            children.push({ data: item, label: label });
+          }
+        });
+      }
+    });
     
-    if (data.body && Array.isArray(data.body)) {
-      data.body.forEach((stmt, idx) => {
-        children.push({ data: stmt, label: this.formatNodeLabel(stmt, `body_${idx}`) });
-      });
-    }
+    // Nós individuais importantes
+    const singleNodeFields = [
+      'condition', 'expression', 'left', 'right', 'operand',
+      'init_expr', 'increment', 'initial_value', 'index', 'index2',
+      'array_access', 'object_attr_access', 'array_size', 'object',
+      'then_block', 'else_block'
+    ];
     
-    if (data.then_body && Array.isArray(data.then_body)) {
-      const thenBranch = document.createElement('div');
-      data.then_body.forEach((stmt, idx) => {
-        children.push({ data: stmt, label: `then_${idx}` });
-      });
-    }
-    
-    if (data.else_body && Array.isArray(data.else_body)) {
-      data.else_body.forEach((stmt, idx) => {
-        children.push({ data: stmt, label: `else_${idx}` });
-      });
-    }
-    
-    // Campos individuais importantes
-    if (data.condition) {
-      children.push({ data: data.condition, label: 'condition' });
-    }
-    
-    if (data.expression) {
-      children.push({ data: data.expression, label: 'expression' });
-    }
-    
-    if (data.left) {
-      children.push({ data: data.left, label: 'left' });
-    }
-    
-    if (data.right) {
-      children.push({ data: data.right, label: 'right' });
-    }
+    singleNodeFields.forEach(field => {
+      if (data[field] && typeof data[field] === 'object') {
+        children.push({ 
+          data: data[field], 
+          label: field 
+        });
+      }
+    });
     
     return children;
   }

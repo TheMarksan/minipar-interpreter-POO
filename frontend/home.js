@@ -396,6 +396,48 @@ SEQ {
     print("Texto: " + texto + "\\n");
     print("Tamanho: " + tamanho + "\\n");
     print("Substring: " + parte + "\\n");
+}`,
+    
+    // === INPUT (novo) ===
+    'Input Básico': `SEQ {
+    STRING nome;
+    INT idade;
+    
+    print("Digite seu nome: ");
+    nome = input();
+    print("Olá, " + nome + "!\\n");
+    
+    print("Digite sua idade: ");
+    idade = input();
+    print("Você tem " + idade + " anos.\\n");
+}`,
+    
+    'Input com Cálculo': `SEQ {
+    INT num1;
+    INT num2;
+    INT soma;
+    
+    print("Primeiro número: ");
+    num1 = input();
+    print("Segundo número: ");
+    num2 = input();
+    
+    soma = num1 + num2;
+    print("A soma é: " + soma + "\\n");
+}`,
+    
+    'Input em Loop': `SEQ {
+    INT i;
+    INT numero;
+    INT soma;
+    
+    soma = 0;
+    for i = 1; i <= 3; i = i + 1 {
+        print("Digite o número " + i + ": ");
+        numero = input();
+        soma = soma + numero;
+    }
+    print("Soma total: " + soma + "\\n");
 }`
   };
 
@@ -759,7 +801,9 @@ SEQ {
     semOut.textContent = data.semantico ? (typeof data.semantico === 'string' ? data.semantico : JSON.stringify(data.semantico,null,2)) : 'Nenhuma análise semântica.';
     
     // ast - renderizar com suporte a toggle tree/text
-    renderAST(data.ast);
+    // Preferir ast_json (formato objeto) para renderização gráfica, fallback para ast (texto)
+    const astData = data.ast_json || data.ast;
+    renderAST(astData);
     
     // symbol table
     if (symbolTableOut && data.symbol_table) {
@@ -797,17 +841,16 @@ SEQ {
     document.getElementById('astOutput').textContent = '🔄 Gerando árvore...';
     if (symbolTableOut) symbolTableOut.textContent = '🔄 Processando...';
     
-    // Tentar usar WebSocket primeiro
-    if (wsClient && wsClient.isConnected()) {
-      try {
-        updateWSStatus('executing', 'Executando...');
-        wsClient.send(code);
-        // Resultado será processado pelo handler onMessage
-        return;
-      } catch (err) {
-        console.error('WebSocket error, falling back to REST:', err);
-      }
-    }
+    // WebSocket desabilitado - usar REST API para suporte a input interativo
+    // if (wsClient && wsClient.isConnected()) {
+    //   try {
+    //     updateWSStatus('executing', 'Executando...');
+    //     wsClient.send(code);
+    //     return;
+    //   } catch (err) {
+    //     console.error('WebSocket error, falling back to REST:', err);
+    //   }
+    // }
     
     // Fallback para REST API
     try{

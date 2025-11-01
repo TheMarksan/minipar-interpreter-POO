@@ -664,6 +664,10 @@ class SemanticAnalyzer:
 
     def visit_InputNode(self, node):
         """Analisa comando INPUT para entrada de dados do usuário."""
+        # Registrar INPUT na symbol table
+        self.symbol_table.add_statement('INPUT', line=getattr(node, 'line', None), 
+                                       details={'identifier': node.identifier if node.identifier else None})
+        
         # Verificar se identifier existe antes de marcar como usado
         if node.identifier:
             self.used_variables.add(node.identifier)

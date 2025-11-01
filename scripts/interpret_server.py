@@ -182,6 +182,15 @@ class SimpleHandler(BaseHTTPRequestHandler):
             'symbol_table': symbol_table_data,
             'ast': ast_text
         }
+        
+        # Adicionar AST em formato JSON para renderização gráfica
+        if ast is not None:
+            try:
+                from parser.AST import ast_to_dict
+                response['ast_json'] = ast_to_dict(ast)
+            except Exception as e:
+                # Se não conseguir serializar, apenas ignorar
+                response['ast_json'] = None
 
         # Attempt to generate TAC (three-address code) from the AST if available
         try:
