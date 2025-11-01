@@ -1075,22 +1075,90 @@ SEQ {
   }
   
   // ==========================================================================
-  // MODAL DO EDITOR DE CÓDIGO
+  // MODAL DO EDITOR DE CÓDIGO COM CODEMIRROR
   // ==========================================================================
+  
+  let modalEditorInstance = null;
+  
+  function initModalEditor() {
+    if (!codeModalContent) return;
+    
+    // Se já existe, destruir
+    if (modalEditorInstance) {
+      const parent = modalEditorInstance.getWrapperElement().parentNode;
+      parent.removeChild(modalEditorInstance.getWrapperElement());
+      modalEditorInstance = null;
+    }
+    
+    // Criar nova instância do CodeMirror
+    modalEditorInstance = CodeMirror.fromTextArea(codeModalContent, {
+      mode: 'text/x-csrc',
+      theme: 'dracula',
+      lineNumbers: true,
+      lineWrapping: false,
+      indentUnit: 4,
+      tabSize: 4,
+      indentWithTabs: false,
+      matchBrackets: true,
+      autoCloseBrackets: true,
+      styleActiveLine: true,
+      viewportMargin: Infinity,
+      extraKeys: {
+        'Tab': function(cm) {
+          if (cm.somethingSelected()) {
+            cm.indentSelection('add');
+          } else {
+            cm.replaceSelection('    ', 'end');
+          }
+        },
+        'Shift-Tab': function(cm) {
+          cm.indentSelection('subtract');
+        }
+      }
+    });
+    
+    // Ajustar tamanho
+    modalEditorInstance.setSize('100%', '100%');
+  }
   
   if (codeExpandBtn) {
     codeExpandBtn.addEventListener('click', () => {
       const code = getEditorValue();
-      if (codeModalContent) {
-        codeModalContent.value = code;
-        codeModal.classList.add('show');
+      
+      // Abrir modal
+      codeModal.classList.add('show');
+      
+      // Inicializar CodeMirror no modal (timeout para garantir que o modal está visível)
+      setTimeout(() => {
+        initModalEditor();
+        if (modalEditorInstance) {
+          modalEditorInstance.setValue(code);
+          modalEditorInstance.refresh();
+          modalEditorInstance.focus();
+        }
+      }, 100);
+    });
+  }
+  
+  // Botão de salvar (aplicar mudanças ao editor principal)
+  const codeModalSave = document.getElementById('codeModalSave');
+  if (codeModalSave) {
+    codeModalSave.addEventListener('click', () => {
+      if (modalEditorInstance) {
+        const updatedCode = modalEditorInstance.getValue();
+        setEditorValue(updatedCode);
+        updateGutter();
+        closeModal(codeModal);
       }
     });
   }
   
   if (codeModalClose) {
-    codeModalClose.addEventListener('click', () => closeModal(codeModal));
+    codeModalClose.addEventListener('click', () => {
+      closeModal(codeModal);
+    });
   }
+  
   setupModalClose(codeModal);
   
   // ==========================================================================
