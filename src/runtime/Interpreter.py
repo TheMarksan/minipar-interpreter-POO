@@ -105,12 +105,13 @@ class ObjectInstance:
 
 
 class Interpreter:
-    def __init__(self, channel_bind=None, channel_connect=None, node_id=None, channel_map=None):
+    def __init__(self, channel_bind=None, channel_connect=None, node_id=None, channel_map=None, output_stream=None, input_callback=None):
         self.symbol_table = SymbolTable()
         self.global_scope = {}
         self.local_storage = threading.local()
         self.classes = {}
         self.functions = {}
+        self.variable_types = {}  # Mapeia nome_variavel -> tipo
         self.thread_manager = ThreadManager()
         self.return_value = None
         self.print_lock = threading.Lock()
@@ -121,6 +122,9 @@ class Interpreter:
         # channel_map: dict mapping node_identifier -> 'host:port' for binding
         self.node_id = node_id
         self.channel_map = channel_map or {}
+        # Para integração com servidor web
+        self.output_stream = output_stream
+        self.input_provider = input_callback
     
     @property
     def local_scope(self):
@@ -413,6 +417,9 @@ class Interpreter:
         
         scope[node.identifier] = value
         
+        # Registrar o tipo da variável para validação de input
+        self.variable_types[node.identifier] = node.type_name
+        
         if scope is self.global_scope:
             self.symbol_table.define(
                 node.identifier,
@@ -513,13 +520,62 @@ class Interpreter:
                 # No stdin available; behave like empty input rather than crash
                 value = ''
         
-        try:
-            if '.' in value:
-                value = float(value)
-            else:
-                value = int(value)
-        except ValueError:
-            pass
+        # Buscar o tipo da variável
+        var_type = None
+        if node.identifier in self.variable_types:
+            var_type = self.variable_types[node.identifier].lower()
+        
+        # Validar e converter o valor conforme o tipo da variável
+        if var_type:
+            try:
+                if var_type == 'int':
+                    # Tipo INT: aceita apenas números inteiros
+                    value = value.strip()
+                    if not value.lstrip('-').isdigit():
+                        raise ValueError(f"Erro de tipo: variável '{node.identifier}' é INT, mas recebeu '{value}' que não é um número inteiro")
+                    value = int(value)
+                    
+                elif var_type == 'float':
+                    # Tipo FLOAT: aceita números decimais
+                    value = value.strip()
+                    value = float(value)
+                    
+                elif var_type == 'bool':
+                    # Tipo BOOL: aceita true/false, 1/0
+                    value = value.strip().lower()
+                    if value in ['true', '1', 'verdadeiro', 'sim']:
+                        value = True
+                    elif value in ['false', '0', 'falso', 'nao', 'não']:
+                        value = False
+                    else:
+                        raise ValueError(f"Erro de tipo: variável '{node.identifier}' é BOOL, mas recebeu '{value}' que não é um valor booleano válido (true/false, 1/0)")
+                        
+                elif var_type in ['string', 'str']:
+                    # Tipo STRING: aceita qualquer valor (já é string)
+                    value = str(value)
+                    
+                else:
+                    # Outros tipos: tentar conversão automática
+                    if '.' in value:
+                        value = float(value)
+                    else:
+                        try:
+                            value = int(value)
+                        except ValueError:
+                            pass  # Manter como string
+                            
+            except ValueError as e:
+                # Erro de conversão de tipo - lançar erro de runtime
+                raise RuntimeError(str(e))
+        else:
+            # Sem tipo definido: conversão automática antiga (compatibilidade)
+            try:
+                if '.' in value:
+                    value = float(value)
+                else:
+                    value = int(value)
+            except ValueError:
+                pass  # Manter como string
         
         if node.identifier in self.local_scope:
             self.local_scope[node.identifier] = value

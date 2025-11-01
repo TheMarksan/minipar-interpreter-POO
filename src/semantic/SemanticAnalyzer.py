@@ -676,12 +676,15 @@ class SemanticAnalyzer:
             var_symbol = self.symbol_table.lookup(node.identifier)
             if not var_symbol:
                 self.error(f"Variável '{node.identifier}' não declarada", node)
-            
-            # Input sempre retorna string, mas pode ser convertido
-            # pelo interpretador automaticamente
-            # Avisar se a variável não é STRING (conversão implícita em runtime)
-            if var_symbol and var_symbol.symbol_type.upper() not in ['STRING', 'STR']:
-                self.warning(f"input() retorna STRING, mas está sendo atribuído a {var_symbol.symbol_type}. Conversão será tentada em runtime.", node)
+            else:
+                # Avisar sobre validação de tipo em runtime
+                var_type = var_symbol.symbol_type.upper()
+                if var_type == 'INT':
+                    self.warning(f"input() em '{node.identifier}' (INT): apenas números inteiros serão aceitos em runtime.", node)
+                elif var_type == 'FLOAT':
+                    self.warning(f"input() em '{node.identifier}' (FLOAT): apenas números decimais serão aceitos em runtime.", node)
+                elif var_type == 'BOOL':
+                    self.warning(f"input() em '{node.identifier}' (BOOL): apenas valores booleanos (true/false, 1/0) serão aceitos em runtime.", node)
 
         # Verificar expressão de prompt se existir
         if node.prompt:
