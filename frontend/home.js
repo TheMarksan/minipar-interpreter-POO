@@ -43,12 +43,10 @@ SEQ {
     INT idade;
     FLOAT altura;
     STRING nome;
-    BOOL ativo;
     
     idade = 25;
     altura = 1.75;
     nome = "Maria";
-    ativo = 1;
     
     print("Nome: " + nome + "\\n");
     print("Idade: " + idade + "\\n");
@@ -68,11 +66,11 @@ SEQ {
     INT nota;
     nota = 75;
     
-    if (nota >= 90) {
+    if nota >= 90 {
         print("Excelente!\\n");
-    } else if (nota >= 70) {
+    } else if nota >= 70 {
         print("Bom!\\n");
-    } else if (nota >= 50) {
+    } else if nota >= 50 {
         print("Regular\\n");
     } else {
         print("Reprovado\\n");
@@ -84,7 +82,7 @@ SEQ {
     INT y;
     x = 10;
     y = 5;
-    if (x > y) {
+    if x > y {
         print("x é maior\\n");
     } else {
         print("y é maior ou igual\\n");
@@ -95,11 +93,11 @@ SEQ {
     INT opcao;
     opcao = 2;
     
-    if (opcao == 1) {
+    if opcao == 1 {
         print("Opção 1: Novo\\n");
-    } else if (opcao == 2) {
+    } else if opcao == 2 {
         print("Opção 2: Abrir\\n");
-    } else if (opcao == 3) {
+    } else if opcao == 3 {
         print("Opção 3: Salvar\\n");
     } else {
         print("Opção inválida\\n");
@@ -123,7 +121,7 @@ SEQ {
     INT contador;
     contador = 5;
     
-    while (contador > 0) {
+    while contador > 0 {
         print("Contagem: " + contador + "\\n");
         contador = contador - 1;
     }
@@ -156,27 +154,27 @@ SEQ {
 }`,
     
     // === FUNÇÕES ===
-    'Função Simples': `SEQ {
-    INT dobro(INT n) {
-        return n * 2;
-    }
-    
-    FLOAT media(FLOAT a, FLOAT b) {
-        return (a + b) / 2.0;
-    }
-    
+    'Função Simples': `INT dobro(INT n) {
+    return n * 2;
+}
+
+FLOAT media(FLOAT a, FLOAT b) {
+    return (a + b) / 2.0;
+}
+
+SEQ {
     print("Dobro de 7: " + dobro(7) + "\\n");
     print("Média 8 e 6: " + media(8.0, 6.0) + "\\n");
 }`,
     
-    'Função Recursiva (Fibonacci)': `SEQ {
-    INT fibonacci(INT n) {
-        if (n <= 1) {
-            return n;
-        }
-        return fibonacci(n - 1) + fibonacci(n - 2);
+    'Função Recursiva (Fibonacci)': `INT fibonacci(INT n) {
+    if n <= 1 {
+        return n;
     }
-    
+    return fibonacci(n - 1) + fibonacci(n - 2);
+}
+
+SEQ {
     INT i;
     print("Sequência Fibonacci:\\n");
     for i = 0; i < 8; i = i + 1 {
@@ -185,16 +183,23 @@ SEQ {
     print("\\n");
 }`,
     
-    'Múltiplas Funções': `SEQ {
-    INT fatorial(INT n) {
-        if (n <= 1) return 1;
-        return n * fatorial(n - 1);
+    'Múltiplas Funções': `INT fatorial(INT n) {
+    if n <= 1 {
+        return 1;
     }
-    
-    BOOL ehPar(INT n) {
-        return (n - (n / 2) * 2) == 0;
+    return n * fatorial(n - 1);
+}
+
+INT ehPar(INT n) {
+    INT resto;
+    resto = n - (n / 2) * 2;
+    if resto == 0 {
+        return 1;
     }
-    
+    return 0;
+}
+
+SEQ {
     print("5! = " + fatorial(5) + "\\n");
     print("10 é par? " + ehPar(10) + "\\n");
     print("7 é par? " + ehPar(7) + "\\n");
@@ -286,46 +291,46 @@ SEQ {
 }`,
     
     // === THREADS ===
-    'Hello World (threads)': `SEQ {
-    VOID thread1() {
-        INT i;
-        for i = 0; i < 3; i = i + 1 {
-            print("Thread A: " + i + "\\n");
-        }
+    'Hello World (threads)': `VOID thread1() {
+    INT i;
+    for i = 0; i < 3; i = i + 1 {
+        print("Thread A: " + i + "\\n");
     }
-    
-    VOID thread2() {
-        INT j;
-        for j = 5; j < 8; j = j + 1 {
-            print("Thread B: " + j + "\\n");
-        }
+}
+
+VOID thread2() {
+    INT j;
+    for j = 5; j < 8; j = j + 1 {
+        print("Thread B: " + j + "\\n");
     }
-    
+}
+
+SEQ {
     PAR {
         thread1();
         thread2();
     }
 }`,
     
-    'PAR Block': `SEQ {
-    VOID tarefa1() {
-        print("Tarefa 1 iniciada\\n");
-        INT i;
-        for i = 0; i < 3; i = i + 1 {
-            print("T1: processando...\\n");
-        }
-        print("Tarefa 1 concluída\\n");
+    'PAR Block': `VOID tarefa1() {
+    print("Tarefa 1 iniciada\\n");
+    INT i;
+    for i = 0; i < 3; i = i + 1 {
+        print("T1: processando...\\n");
     }
-    
-    VOID tarefa2() {
-        print("Tarefa 2 iniciada\\n");
-        INT j;
-        for j = 0; j < 3; j = j + 1 {
-            print("T2: executando...\\n");
-        }
-        print("Tarefa 2 concluída\\n");
+    print("Tarefa 1 concluída\\n");
+}
+
+VOID tarefa2() {
+    print("Tarefa 2 iniciada\\n");
+    INT j;
+    for j = 0; j < 3; j = j + 1 {
+        print("T2: executando...\\n");
     }
-    
+    print("Tarefa 2 concluída\\n");
+}
+
+SEQ {
     PAR {
         tarefa1();
         tarefa2();
@@ -657,6 +662,15 @@ SEQ {
   }
 
   runBtn.addEventListener('click', interpretarCodigo);
+  
+  // Atalho CTRL+ENTER para executar código
+  document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      e.preventDefault();
+      interpretarCodigo();
+    }
+  });
+  
   // Inicializar CodeMirror (se disponível) e definir conteúdo inicial + tema
   if(window.CodeMirror){
     // Criar instância do editor e expor para outros helpers
