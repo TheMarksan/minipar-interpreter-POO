@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>MiniPar Interpreter 2025.1</title>
-      <link rel="stylesheet" href="home.css?v=2025.11.01.1732">
+      <link rel="stylesheet" href="home.css?v=2025.11.01.1745">
   <!-- CodeMirror (para destacar sintaxe) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/dracula.min.css">
@@ -111,7 +111,12 @@
 
         <div style="display:flex;align-items:center;justify-content:space-between">
           <div class="meta">Editor simples com números de linha fictícios</div>
-          <div class="meta">Saída: <span id="status" class="ok">Pronto</span></div>
+          <div style="display:flex;gap:12px;align-items:center">
+            <button class="btn-ast-expand" id="codeExpandBtn" title="Ampliar editor em modal">
+              <span class="expand-icon">⛶</span>
+            </button>
+            <div class="meta">Saída: <span id="status" class="ok">Pronto</span></div>
+          </div>
         </div>
       </div>
     </section>
@@ -122,6 +127,9 @@
           <strong>Saída: EXECUÇÃO</strong>
           <div style="display:flex;gap:12px;align-items:center">
             <div class="meta">Console / saída do programa</div>
+            <button class="btn-ast-expand" id="execExpandBtn" title="Ampliar saída em modal">
+              <span class="expand-icon">⛶</span>
+            </button>
             <button class="toggle" data-target="execOutput" title="Minimizar/Expandir">▾</button>
           </div>
         </div>
@@ -133,6 +141,9 @@
           <strong>Interpretação LÉXICA</strong>
           <div style="display:flex;align-items:center;gap:12px">
             <div class="meta">Tokens detectados: <span id="tokCount">0</span></div>
+            <button class="btn-ast-expand" id="lexExpandBtn" title="Ampliar tokens em modal">
+              <span class="expand-icon">⛶</span>
+            </button>
             <button class="toggle" data-target="lexOutput" title="Minimizar/Expandir">▾</button>
           </div>
         </div>
@@ -144,6 +155,9 @@
           <strong>Análise SEMÂNTICA</strong>
           <div style="display:flex;align-items:center;gap:12px">
             <div class="meta">Mensagens e avisos</div>
+            <button class="btn-ast-expand" id="semExpandBtn" title="Ampliar análise em modal">
+              <span class="expand-icon">⛶</span>
+            </button>
             <button class="toggle" data-target="semOutput" title="Minimizar/Expandir">▾</button>
           </div>
         </div>
@@ -154,6 +168,9 @@
           <strong>Código de 3-endereços (TAC)</strong>
           <div style="display:flex;align-items:center;gap:12px">
             <div class="meta">Representação intermediária (Three-Address Code)</div>
+            <button class="btn-ast-expand" id="tacExpandBtn" title="Ampliar TAC em modal">
+              <span class="expand-icon">⛶</span>
+            </button>
             <button class="toggle" data-target="tacOutput" title="Minimizar/Expandir">▾</button>
           </div>
         </div>
@@ -183,6 +200,9 @@
           <strong>Tabela de Símbolos</strong>
           <div style="display:flex;align-items:center;gap:12px">
             <div class="meta">Variáveis, funções e classes declaradas</div>
+            <button class="btn-ast-expand" id="symbolExpandBtn" title="Ampliar tabela em modal">
+              <span class="expand-icon">⛶</span>
+            </button>
             <button class="toggle" data-target="symbolTableOutput" title="Minimizar/Expandir">▾</button>
           </div>
         </div>
@@ -196,6 +216,71 @@
     </aside>
 
     
+  </div>
+
+  <!-- Modal para visualização ampliada do Editor -->
+  <div id="codeModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>📝 Editor de Código - Visualização Ampliada</h2>
+        <button class="modal-close" id="codeModalClose" title="Fechar">&times;</button>
+      </div>
+      <div class="modal-body">
+        <textarea id="codeModalContent" class="code-modal-textarea" spellcheck="false"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para visualização ampliada da Execução -->
+  <div id="execModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>▶️ Saída de Execução - Visualização Completa</h2>
+        <button class="modal-close" id="execModalClose" title="Fechar">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="execModalContent" class="modal-output">Nenhuma saída ainda.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para visualização ampliada da Análise Léxica -->
+  <div id="lexModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>🔤 Análise Léxica - Visualização Completa</h2>
+        <button class="modal-close" id="lexModalClose" title="Fechar">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="lexModalContent" class="modal-output">Nenhum token ainda.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para visualização ampliada da Análise Semântica -->
+  <div id="semModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>🔍 Análise Semântica - Visualização Completa</h2>
+        <button class="modal-close" id="semModalClose" title="Fechar">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="semModalContent" class="modal-output">Nenhuma análise ainda.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para visualização ampliada do TAC -->
+  <div id="tacModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>⚙️ Código de 3-Endereços (TAC) - Visualização Completa</h2>
+        <button class="modal-close" id="tacModalClose" title="Fechar">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="tacModalContent" class="modal-output">TAC não disponível.</div>
+      </div>
+    </div>
   </div>
 
   <!-- Modal para visualização ampliada da AST -->
@@ -217,12 +302,25 @@
     </div>
   </div>
 
+  <!-- Modal para visualização ampliada da Tabela de Símbolos -->
+  <div id="symbolModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>📊 Tabela de Símbolos - Visualização Completa</h2>
+        <button class="modal-close" id="symbolModalClose" title="Fechar">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="symbolModalContent" class="modal-output">Tabela não disponível.</div>
+      </div>
+    </div>
+  </div>
+
   <!-- Scripts CodeMirror (devem carregar antes de home.js para inicializar o editor) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/clike/clike.min.js"></script>
-  <script src="./ast-tree.js?v=2025.11.01.1732"></script>
-  <script src="./websocket-client.js?v=2025.11.01.1732"></script>
-  <script src="./home.js?v=2025.11.01.1732"></script>
+  <script src="./ast-tree.js?v=2025.11.01.1745"></script>
+  <script src="./websocket-client.js?v=2025.11.01.1745"></script>
+  <script src="./home.js?v=2025.11.01.1745"></script>
   
 </body>
 </html>

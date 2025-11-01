@@ -378,7 +378,8 @@ p.lead{margin:0;color:var(--muted);font-size:13px}
   min-height: 0;
 }
 
-.ast-modal-output {
+.ast-modal-output,
+.modal-output {
   font-family: var(--mono);
   font-size: 14px;
   line-height: 1.6;
@@ -390,6 +391,28 @@ p.lead{margin:0;color:var(--muted);font-size:13px}
   border-radius: 12px;
   padding: 24px;
   min-height: 100%;
+}
+
+/* Textarea do modal de código */
+.code-modal-textarea {
+  width: 100%;
+  height: 100%;
+  min-height: 70vh;
+  font-family: var(--mono);
+  font-size: 14px;
+  line-height: 1.6;
+  color: #e6eef6;
+  background: rgba(7, 16, 37, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 24px;
+  resize: none;
+  outline: none;
+}
+
+.code-modal-textarea:focus {
+  border-color: rgba(124, 92, 255, 0.3);
+  box-shadow: 0 0 0 3px rgba(124, 92, 255, 0.1);
 }
 
 /* Scrollbar para modal */

@@ -998,14 +998,179 @@ SEQ {
   // Sem painel de entrada externo: usar prompt exec inline (showInputPrompt) para entrada interativa
 
   // ==========================================================================
-  // MODAL DE AST AMPLIADA
+  // MODAIS DE VISUALIZAÇÃO AMPLIADA
   // ==========================================================================
+  
+  // Elementos dos modais
+  const codeModal = document.getElementById('codeModal');
+  const codeModalContent = document.getElementById('codeModalContent');
+  const codeExpandBtn = document.getElementById('codeExpandBtn');
+  const codeModalClose = document.getElementById('codeModalClose');
+  
+  const execModal = document.getElementById('execModal');
+  const execModalContent = document.getElementById('execModalContent');
+  const execExpandBtn = document.getElementById('execExpandBtn');
+  const execModalClose = document.getElementById('execModalClose');
+  
+  const lexModal = document.getElementById('lexModal');
+  const lexModalContent = document.getElementById('lexModalContent');
+  const lexExpandBtn = document.getElementById('lexExpandBtn');
+  const lexModalClose = document.getElementById('lexModalClose');
+  
+  const semModal = document.getElementById('semModal');
+  const semModalContent = document.getElementById('semModalContent');
+  const semExpandBtn = document.getElementById('semExpandBtn');
+  const semModalClose = document.getElementById('semModalClose');
+  
+  const tacModal = document.getElementById('tacModal');
+  const tacModalContent = document.getElementById('tacModalContent');
+  const tacExpandBtn = document.getElementById('tacExpandBtn');
+  const tacModalClose = document.getElementById('tacModalClose');
   
   const astModal = document.getElementById('astModal');
   const astModalContent = document.getElementById('astModalContent');
   const astExpandBtn = document.getElementById('astExpandBtn');
   const astModalClose = document.getElementById('astModalClose');
   const astViewToggleModal = document.getElementById('astViewToggleModal');
+  
+  const symbolModal = document.getElementById('symbolModal');
+  const symbolModalContent = document.getElementById('symbolModalContent');
+  const symbolExpandBtn = document.getElementById('symbolExpandBtn');
+  const symbolModalClose = document.getElementById('symbolModalClose');
+  
+  // ==========================================================================
+  // FUNÇÃO GENÉRICA PARA ABRIR/FECHAR MODAIS
+  // ==========================================================================
+  
+  function openModal(modal, content, sourceElement) {
+    if (!modal || !content || !sourceElement) return;
+    
+    // Copiar conteúdo
+    if (sourceElement.tagName === 'TEXTAREA' || sourceElement.tagName === 'INPUT') {
+      if (content.tagName === 'TEXTAREA' || content.tagName === 'INPUT') {
+        content.value = sourceElement.value;
+      } else {
+        content.textContent = sourceElement.value;
+      }
+    } else {
+      content.innerHTML = sourceElement.innerHTML;
+    }
+    
+    modal.classList.add('show');
+  }
+  
+  function closeModal(modal) {
+    if (!modal) return;
+    modal.classList.remove('show');
+  }
+  
+  // Fechar modal ao clicar fora
+  function setupModalClose(modal) {
+    if (!modal) return;
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        closeModal(modal);
+      }
+    });
+  }
+  
+  // ==========================================================================
+  // MODAL DO EDITOR DE CÓDIGO
+  // ==========================================================================
+  
+  if (codeExpandBtn) {
+    codeExpandBtn.addEventListener('click', () => {
+      const code = getEditorValue();
+      if (codeModalContent) {
+        codeModalContent.value = code;
+        codeModal.classList.add('show');
+      }
+    });
+  }
+  
+  if (codeModalClose) {
+    codeModalClose.addEventListener('click', () => closeModal(codeModal));
+  }
+  setupModalClose(codeModal);
+  
+  // ==========================================================================
+  // MODAL DE SAÍDA DE EXECUÇÃO
+  // ==========================================================================
+  
+  if (execExpandBtn) {
+    execExpandBtn.addEventListener('click', () => {
+      openModal(execModal, execModalContent, execOut);
+    });
+  }
+  
+  if (execModalClose) {
+    execModalClose.addEventListener('click', () => closeModal(execModal));
+  }
+  setupModalClose(execModal);
+  
+  // ==========================================================================
+  // MODAL DE ANÁLISE LÉXICA
+  // ==========================================================================
+  
+  if (lexExpandBtn) {
+    lexExpandBtn.addEventListener('click', () => {
+      openModal(lexModal, lexModalContent, lexOut);
+    });
+  }
+  
+  if (lexModalClose) {
+    lexModalClose.addEventListener('click', () => closeModal(lexModal));
+  }
+  setupModalClose(lexModal);
+  
+  // ==========================================================================
+  // MODAL DE ANÁLISE SEMÂNTICA
+  // ==========================================================================
+  
+  if (semExpandBtn) {
+    semExpandBtn.addEventListener('click', () => {
+      openModal(semModal, semModalContent, semOut);
+    });
+  }
+  
+  if (semModalClose) {
+    semModalClose.addEventListener('click', () => closeModal(semModal));
+  }
+  setupModalClose(semModal);
+  
+  // ==========================================================================
+  // MODAL DE TAC
+  // ==========================================================================
+  
+  if (tacExpandBtn) {
+    tacExpandBtn.addEventListener('click', () => {
+      openModal(tacModal, tacModalContent, tacOut);
+    });
+  }
+  
+  if (tacModalClose) {
+    tacModalClose.addEventListener('click', () => closeModal(tacModal));
+  }
+  setupModalClose(tacModal);
+  
+  // ==========================================================================
+  // MODAL DE TABELA DE SÍMBOLOS
+  // ==========================================================================
+  
+  if (symbolExpandBtn) {
+    symbolExpandBtn.addEventListener('click', () => {
+      openModal(symbolModal, symbolModalContent, symbolTableOut);
+    });
+  }
+  
+  if (symbolModalClose) {
+    symbolModalClose.addEventListener('click', () => closeModal(symbolModal));
+  }
+  setupModalClose(symbolModal);
+  
+  // ==========================================================================
+  // MODAL DE AST (mantém lógica especial com toggle)
+  // ==========================================================================
   
   // Abrir modal
   if (astExpandBtn) {
@@ -1042,10 +1207,14 @@ SEQ {
     });
   }
   
-  // Fechar modal com ESC
+  // Fechar todos os modais com ESC
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && astModal.classList.contains('show')) {
-      astModal.classList.remove('show');
+    if (e.key === 'Escape') {
+      [codeModal, execModal, lexModal, semModal, tacModal, astModal, symbolModal].forEach(modal => {
+        if (modal && modal.classList.contains('show')) {
+          closeModal(modal);
+        }
+      });
     }
   });
   
