@@ -541,8 +541,9 @@ SEQ {
       astRenderer.render(astData);
     }
     
-    // Atualizar o botão toggle
+    // Atualizar os botões toggle (principal e modal)
     updateASTToggleButton(viewMode);
+    updateModalToggleButton(viewMode);
   }
   
   // Atualizar visual do botão toggle
@@ -563,6 +564,11 @@ SEQ {
       label.textContent = 'Árvore';
       astViewToggle.title = 'Clique para ver como texto formatado';
     }
+  }
+  
+  // Declaração antecipada da função (será definida depois)
+  function updateModalToggleButton(mode) {
+    // Será implementada na seção do modal
   }
   
   // Toggle AST view mode
@@ -990,4 +996,129 @@ SEQ {
   }
 
   // Sem painel de entrada externo: usar prompt exec inline (showInputPrompt) para entrada interativa
+
+  // ==========================================================================
+  // MODAL DE AST AMPLIADA
+  // ==========================================================================
+  
+  const astModal = document.getElementById('astModal');
+  const astModalContent = document.getElementById('astModalContent');
+  const astExpandBtn = document.getElementById('astExpandBtn');
+  const astModalClose = document.getElementById('astModalClose');
+  const astViewToggleModal = document.getElementById('astViewToggleModal');
+  
+  // Abrir modal
+  if (astExpandBtn) {
+    astExpandBtn.addEventListener('click', () => {
+      if (currentAstData) {
+        astModal.classList.add('show');
+        // Copiar conteúdo da AST para o modal
+        renderASTInModal(currentAstData, astViewMode);
+      } else {
+        astModalContent.textContent = 'AST ainda não gerada. Execute um código primeiro.';
+        astModal.classList.add('show');
+      }
+    });
+  }
+  
+  // Fechar modal
+  if (astModalClose) {
+    astModalClose.addEventListener('click', () => {
+      astModal.classList.remove('show');
+    });
+  }
+  
+  // Fechar modal ao clicar fora do conteúdo
+  if (astModal) {
+    astModal.addEventListener('click', (e) => {
+      if (e.target === astModal) {
+        astModal.classList.remove('show');
+      }
+    });
+  }
+  
+  // Fechar modal com ESC
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && astModal.classList.contains('show')) {
+      astModal.classList.remove('show');
+    }
+  });
+  
+  // Toggle de visualização no modal
+  if (astViewToggleModal) {
+    astViewToggleModal.addEventListener('click', () => {
+      // Alternar modo
+      const newMode = astViewMode === 'tree' ? 'text' : 'tree';
+      astViewMode = newMode;
+      
+      // Salvar preferência
+      localStorage.setItem('astViewMode', astViewMode);
+      
+      // Re-renderizar AST no modal e na tela principal
+      if (currentAstData) {
+        renderASTInModal(currentAstData, astViewMode);
+        renderAST(currentAstData, astViewMode);
+      }
+    });
+  }
+  
+  // Atualizar botão do modal (sobrescrever a função stub)
+  updateModalToggleButton = function(mode) {
+    if (!astViewToggleModal) return;
+    
+    const icon = astViewToggleModal.querySelector('.view-icon');
+    const label = astViewToggleModal.querySelector('.view-label');
+    
+    if (mode === 'text') {
+      astViewToggleModal.setAttribute('data-mode', 'text');
+      icon.textContent = '�';
+      label.textContent = 'Texto';
+      astViewToggleModal.title = 'Clique para ver como árvore visual';
+    } else {
+      astViewToggleModal.setAttribute('data-mode', 'tree');
+      icon.textContent = '📊';
+      label.textContent = 'Árvore';
+      astViewToggleModal.title = 'Clique para ver como texto formatado';
+    }
+  };
+  
+  // Renderizar AST no modal
+  function renderASTInModal(astData, mode) {
+    if (!astModalContent) return;
+    
+    updateModalToggleButton(mode);
+    astModalContent.innerHTML = '';
+    
+    if (!astData) {
+      astModalContent.textContent = 'AST ainda não gerada.';
+      return;
+    }
+    
+    if (mode === 'tree') {
+      // Modo árvore visual - usar ast-tree.js
+      if (typeof renderASTTree === 'function') {
+        try {
+          renderASTTree(astData, astModalContent);
+        } catch (err) {
+          console.error('Erro ao renderizar árvore:', err);
+          astModalContent.innerHTML = `<div class="error">Erro ao renderizar árvore visual: ${err.message}</div>`;
+        }
+      } else {
+        astModalContent.textContent = 'Renderizador de árvore não disponível.';
+      }
+    } else {
+      // Modo texto - mostrar AST formatado
+      if (typeof astData === 'string') {
+        astModalContent.textContent = astData;
+      } else {
+        astModalContent.textContent = JSON.stringify(astData, null, 2);
+      }
+      
+      // Aplicar syntax highlighting
+      if (astModalContent.textContent) {
+        astModalContent.innerHTML = syntaxHighlightAST(astModalContent.textContent);
+      }
+    }
+  }
+
 });

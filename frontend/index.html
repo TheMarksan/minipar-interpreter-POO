@@ -169,6 +169,9 @@
               <span class="view-icon">📊</span>
               <span class="view-label">Árvore</span>
             </button>
+            <button class="btn-ast-expand" id="astExpandBtn" title="Ampliar AST em modal">
+              <span class="expand-icon">⛶</span>
+            </button>
             <button class="toggle" data-target="astOutput" title="Minimizar/Expandir">▾</button>
           </div>
         </div>
@@ -193,6 +196,25 @@
     </aside>
 
     
+  </div>
+
+  <!-- Modal para visualização ampliada da AST -->
+  <div id="astModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>🌳 Árvore Sintática Abstrata (AST) - Visualização Completa</h2>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="btn-ast-view-modal" id="astViewToggleModal" title="Alternar visualização">
+            <span class="view-icon">📊</span>
+            <span class="view-label">Árvore</span>
+          </button>
+          <button class="modal-close" id="astModalClose" title="Fechar">&times;</button>
+        </div>
+      </div>
+      <div class="modal-body">
+        <div id="astModalContent" class="ast-modal-output">AST ainda não gerada.</div>
+      </div>
+    </div>
   </div>
 
   <!-- Scripts CodeMirror (devem carregar antes de home.js para inicializar o editor) -->
