@@ -259,8 +259,12 @@ class ConditionNode(ASTNode):
 
 
 class DeclarationNode(ASTNode):
-    """Representa declaração de variável com inicialização opcional."""
-    def __init__(self, type_name, identifier, initial_value=None, is_array=False, array_size=None, is_2d_array=False, array_dimensions=None):
+    """Representa declaração de variável com inicialização opcional.
+
+    Para canais (`c_channel`) pode conter um `channel_info` com metadados
+    (por exemplo: identificadores ou endpoints) extraídos da declaração.
+    """
+    def __init__(self, type_name, identifier, initial_value=None, is_array=False, array_size=None, is_2d_array=False, array_dimensions=None, channel_info=None):
         self.type_name = type_name          # Tipo da variável
         self.identifier = identifier        # Nome da variável
         self.initial_value = initial_value  # Valor inicial (opcional)
@@ -268,6 +272,7 @@ class DeclarationNode(ASTNode):
         self.array_size = array_size        # Tamanho do array 1D
         self.is_2d_array = is_2d_array      # True se for array 2D
         self.array_dimensions = array_dimensions  # [linhas, colunas] para arrays 2D
+        self.channel_info = channel_info    # Metadados para c_channel, se houver
 
 
 class ArrayAccessNode(ASTNode):

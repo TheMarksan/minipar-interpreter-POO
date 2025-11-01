@@ -17,7 +17,7 @@ void funcao2(){
 }
 
 
-PAR {
+par {
     funcao1();
     funcao2();
 }

@@ -237,6 +237,15 @@ class Parser:
     def parse_declaration(self):
         type_name = self.advance().lexeme
         identifier = self.expect(TokenType.IDENT).lexeme
+
+        # Special handling for channel declaration syntax:
+        # c_channel chan [id1 id2 ...];  -> store extra identifiers in channel_info
+        channel_info = None
+        if type_name.lower() == 'c_channel':
+            channel_info = []
+            # Collect following identifiers until semicolon or other token
+            while self.match(TokenType.IDENT):
+                channel_info.append(self.advance().lexeme)
         
         is_array = False
         is_2d_array = False
@@ -279,8 +288,15 @@ class Parser:
         
         if self.match(TokenType.SEMICOLON):
             self.advance()
-        
-        return DeclarationNode(type_name, identifier, initial_value, is_array, array_size, is_2d_array, array_dimensions)
+
+        # Return DeclarationNode with optional channel_info
+        try:
+            return DeclarationNode(type_name, identifier, initial_value, is_array, array_size, is_2d_array, array_dimensions, channel_info)
+        except TypeError:
+            # Fallback in case AST.DeclarationNode not updated
+            node = DeclarationNode(type_name, identifier, initial_value, is_array, array_size, is_2d_array, array_dimensions)
+            setattr(node, 'channel_info', channel_info)
+            return node
     
     def parse_array_init(self):
         self.expect(TokenType.LBRACKET)

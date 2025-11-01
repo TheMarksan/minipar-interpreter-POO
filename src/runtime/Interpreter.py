@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 # ============================================================================
 
 from parser.AST import *
-from runtime.Channel import Channel
+from runtime.Channel import Channel, NetworkChannel
 from runtime.ThreadManager import ThreadManager
 from symbol_table.SymbolTable import SymbolTable
 
@@ -105,7 +105,7 @@ class ObjectInstance:
 
 
 class Interpreter:
-    def __init__(self):
+    def __init__(self, channel_bind=None, channel_connect=None, node_id=None, channel_map=None):
         self.symbol_table = SymbolTable()
         self.global_scope = {}
         self.local_storage = threading.local()
@@ -114,6 +114,13 @@ class Interpreter:
         self.thread_manager = ThreadManager()
         self.return_value = None
         self.print_lock = threading.Lock()
+        # channel_bind/connect: dict mapping channel_name -> 'host:port'
+        self.channel_bind = channel_bind or {}
+        self.channel_connect = channel_connect or {}
+        # Automatic node mapping: node_id is the identifier of this process
+        # channel_map: dict mapping node_identifier -> 'host:port' for binding
+        self.node_id = node_id
+        self.channel_map = channel_map or {}
     
     @property
     def local_scope(self):
@@ -264,7 +271,83 @@ class Interpreter:
         value = None
         
         if node.type_name.lower() == "c_channel":
-            value = Channel()
+            chan_name = node.identifier
+            # If declaration carries channel_info (ids), use automatic rule:
+            # channel declaration: c_channel name id1 id2
+            # -> id1 is server (bind), id2 is client (connect)
+            if hasattr(node, 'channel_info') and node.channel_info:
+                try:
+                    id1 = node.channel_info[0]
+                    id2 = node.channel_info[1] if len(node.channel_info) > 1 else None
+                except Exception:
+                    id1 = None
+                    id2 = None
+
+                if self.node_id and id1 and id2:
+                    # If this process is the server side for that channel -> bind
+                    if self.node_id == id1:
+                        hostport = self.channel_map.get(id1)
+                        if hostport:
+                            try:
+                                host, port = hostport.split(":", 1)
+                                value = NetworkChannel('server', host, int(port))
+                            except Exception:
+                                value = Channel()
+                        else:
+                            # No mapping provided for server id -> fallback local
+                            value = Channel()
+                    elif self.node_id == id2:
+                        # This process is the client side -> connect to server id1
+                        hostport = self.channel_map.get(id1)
+                        if hostport:
+                            try:
+                                host, port = hostport.split(":", 1)
+                                value = NetworkChannel('client', host, int(port))
+                            except Exception:
+                                value = Channel()
+                        else:
+                            value = Channel()
+                    else:
+                        # This node is not part of the declared pair -> local channel
+                        value = Channel()
+                else:
+                    # No node_id or insufficient channel_info -> fallback to previous CLI mapping
+                    chan_name = node.identifier
+                    if chan_name in self.channel_bind:
+                        hostport = self.channel_bind[chan_name]
+                        try:
+                            host, port = hostport.split(":")
+                            value = NetworkChannel('server', host, int(port))
+                        except Exception:
+                            value = Channel()
+                    elif chan_name in self.channel_connect:
+                        hostport = self.channel_connect[chan_name]
+                        try:
+                            host, port = hostport.split(":")
+                            value = NetworkChannel('client', host, int(port))
+                        except Exception:
+                            value = Channel()
+                    else:
+                        value = Channel()
+            else:
+                # No channel_info: fall back to explicit CLI mappings or local channel
+                chan_name = node.identifier
+                if chan_name in self.channel_bind:
+                    hostport = self.channel_bind[chan_name]
+                    try:
+                        host, port = hostport.split(":")
+                        value = NetworkChannel('server', host, int(port))
+                    except Exception:
+                        value = Channel()
+                elif chan_name in self.channel_connect:
+                    hostport = self.channel_connect[chan_name]
+                    try:
+                        host, port = hostport.split(":")
+                        value = NetworkChannel('client', host, int(port))
+                    except Exception:
+                        value = Channel()
+                else:
+                    value = Channel()
         elif node.is_2d_array and node.array_dimensions:
             # Array bidimensional
             rows = self.evaluate_expression(node.array_dimensions[0])
@@ -543,12 +626,31 @@ class Interpreter:
     
     def execute_send(self, node):
         channel = self.get_variable(node.channel)
+        # If channel variable not declared, create an in-process Channel automatically
+        if channel is None:
+            channel = Channel()
+            # store in global scope by default
+            self.global_scope[node.channel] = channel
+            try:
+                self.symbol_table.define(node.channel, 'c_channel', channel, False, None)
+            except Exception:
+                pass
+
         if isinstance(channel, Channel):
             values = [self.evaluate_expression(val) for val in node.values]
             channel.send(*values)
     
     def execute_receive(self, node):
         channel = self.get_variable(node.channel)
+        # If channel variable not declared, create an in-process Channel automatically
+        if channel is None:
+            channel = Channel()
+            self.global_scope[node.channel] = channel
+            try:
+                self.symbol_table.define(node.channel, 'c_channel', channel, False, None)
+            except Exception:
+                pass
+
         if isinstance(channel, Channel):
             values = channel.receive(len(node.variables))
             

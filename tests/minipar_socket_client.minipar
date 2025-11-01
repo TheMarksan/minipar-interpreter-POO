@@ -1,0 +1,20 @@
+# Programa MiniPar: cliente simples que usa um c_channel para trocar mensagens
+
+# c_channel com ids (client = cliente, server = servidor)
+c_channel chat client server;
+
+VOID cliente() {
+    STRING resp;
+    PRINT("Cliente: conectando e enviando 'oi'...\n");
+    chat.send("oi");
+
+    # Esperar resposta do servidor
+    chat.receive(resp);
+    PRINT("Cliente recebeu do servidor: " + resp + "\n");
+
+    # Enviar confirmação final
+    chat.send("CLIENT_CONFIRM: recebi resposta");
+    PRINT("Cliente enviou confirmação ao servidor.\n");
+}
+seq
+    cliente();

@@ -1,9 +1,9 @@
 
-# Declaração dos canais de comunicação
+# Declaração dos canais de comunicação (canais apenas para comunicação; threads são criadas pelo bloco PAR)
 # request: Cliente -> Servidor (envia operação e valores)
 # response: Servidor -> Cliente (retorna resultado)
-C_CHANNEL request;
-C_CHANNEL response;
+c_channel request;
+c_channel response;
 
 
 VOID computador_1() {
@@ -48,12 +48,13 @@ VOID computador_1() {
     PRINT("  Valor 2: " + valor2 + "\n");
     
     # Enviar dados para o servidor via canal request
-    request.SEND(operacao, valor1, valor2);
+    # Observação: este envio ocorre entre threads criadas no bloco PAR
+    request.send(operacao, valor1, valor2);
     
     # Aguardar resultado do servidor via canal response
     PRINT("\n");
     PRINT("Aguardando cálculo do servidor...\n");
-    response.RECEIVE(resultado);
+    response.receive(resultado);
     
     # Apresentar resultado
     PRINT("\n");
@@ -77,7 +78,8 @@ VOID computador_2() {
     PRINT("\n");
     
     # Receber dados do cliente via canal request
-    request.RECEIVE(operacao, valor1, valor2);
+    # Observação: recebido pelas threads do bloco PAR
+    request.receive(operacao, valor1, valor2);
     
     PRINT("Servidor recebeu requisição:\n");
     PRINT("  Operação: " + operacao + "\n");
@@ -114,7 +116,7 @@ VOID computador_2() {
     PRINT("Servidor enviando resultado para cliente...\n");
     
     # Enviar resultado para o cliente via canal response
-    response.SEND(resultado);
+    response.send(resultado);
     
     PRINT("Servidor: Operação concluída.\n");
 }

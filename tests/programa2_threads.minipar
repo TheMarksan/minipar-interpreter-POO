@@ -1,5 +1,3 @@
-C_CHANNEL canal_resultados;
-
 INT input_int(STRING mensagem) {
     print(mensagem + "\n");
     INT valor;
@@ -39,7 +37,7 @@ VOID thread_fibonacci() {
     b = 1;
 
     for i = 0; i < n; i = i + 1 {
-        canal_resultados.send(a);
+    canal_resultados.send(a);
         temp = a + b;
         a = b;
         b = temp;
@@ -47,7 +45,7 @@ VOID thread_fibonacci() {
     print("Thread Fibonacci finalizada.\n");
 }
 
-PAR {
+par {
     thread_fatorial();
     thread_fibonacci();
 }

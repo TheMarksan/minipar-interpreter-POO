@@ -1,0 +1,24 @@
+# Programa MiniPar: servidor simples que usa um c_channel para trocar mensagens
+
+# c_channel com ids (client = cliente, server = servidor) - permite mapear via CLI
+c_channel chat client server;
+
+VOID servidor() {
+    STRING msg;
+    PRINT("Servidor: iniciando loop de atendimento (pressione Ctrl+C para parar)\n");
+
+    # Loop infinito: aceita mensagens e responde; não bloqueia esperando confirmação
+    while (1) {
+    PRINT("Servidor: aguardando mensagem do cliente...\n");
+    chat.receive(msg);
+    # Indicar explicitamente que o cliente enviou uma mensagem
+    PRINT("Cliente enviou mensagem.\n");
+    PRINT("Servidor recebeu: " + msg + "\n");
+
+        # Responder ao cliente e seguir para próxima requisição
+        chat.send("oi do servidor");
+        PRINT("Servidor enviou resposta ao cliente.\n");
+    }
+}
+
+servidor();
