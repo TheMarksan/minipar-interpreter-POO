@@ -24,18 +24,23 @@ import queue
 import time
 import uuid
 
-# Adicionar o diretório src ao path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
+# Adicionar o diretório do projeto e src ao path
+project_dir = os.path.dirname(os.path.abspath(__file__))
+src_dir = os.path.join(project_dir, 'src')
+if project_dir not in sys.path:
+    sys.path.insert(0, project_dir)
+if src_dir not in sys.path:
+    sys.path.insert(0, src_dir)
 
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 
 # Importar componentes do interpretador
-from lexer.Lexer import Lexer
-from parser.Parser import Parser
-from semantic.SemanticAnalyzer import SemanticAnalyzer
-from runtime.Interpreter import Interpreter
-from utils.ast_printer import print_ast
+from src.lexer.Lexer import Lexer
+from src.parser.Parser import Parser
+from src.semantic.SemanticAnalyzer import SemanticAnalyzer
+from src.runtime.Interpreter import Interpreter
+from src.utils.ast_printer import print_ast
 
 # ============================================================================
 # Configuração Flask
@@ -143,7 +148,7 @@ def interpretar():
         symbol_table_data = None
         
         try:
-            from parser.AST import ast_to_dict
+            from src.parser.AST import ast_to_dict
             ast_json = ast_to_dict(ast)
         except Exception as e:
             ast_json = None
