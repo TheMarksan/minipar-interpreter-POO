@@ -486,7 +486,10 @@ class Interpreter:
         value = self.evaluate_expression(node.expression)
         if isinstance(value, str):
             value = value.replace('\\n', '\n').replace('\\t', '\t')
-        print(value, end='')
+        
+        # Usar lock para garantir que prints de threads diferentes não se misturem
+        with self.print_lock:
+            print(value, end='')
     
     def execute_input(self, node):
         prompt = ""
