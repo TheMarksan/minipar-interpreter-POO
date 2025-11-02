@@ -393,28 +393,28 @@ A IDE web oferece uma experiência completa de desenvolvimento:
 ### 📸 Capturas de Tela
 
 #### 1. Interface Principal — Editor, Saída e Tokens
-![Editor e Saída](./inicio_output_tokens.png)
+![Editor e Saída](./prints/inicio_output_tokens.png)
 
 **Descrição:**
 - Editor CodeMirror com syntax highlighting (tema Dracula)
 - Painel de execução mostrando saída do programa e tokens gerados
 
 #### 2. Visualização da AST (Árvore de Sintaxe)
-![Árvore AST](./ast.png)
+![Árvore AST](./prints/ast.png)
 
 **Descrição:**
 - Visualizador interativo da AST (modo árvore)
 - Permite alternar para a vista texto e inspecionar nós
 
 #### 3. Tabela de Símbolos
-![Tabela de Símbolos](./symbol_table.png)
+![Tabela de Símbolos](./prints/symbol_table.png)
 
 **Descrição:**
 - Mostra variáveis, tipos e valores após execução
 - Exibe blocos (SEQ/PAR) e instruções detectadas na análise semântica
 
 #### 4. Análise Semântica
-![Análise Semântica](./semantic.png)
+![Análise Semântica](./prints/semantic.png)
 
 **Descrição:**
 - Validação de tipos, escopos e uso correto de variáveis
@@ -422,12 +422,29 @@ A IDE web oferece uma experiência completa de desenvolvimento:
 - Status de sucesso quando código está correto
 
 #### 5. Código TAC (Three-Address Code)
-![TAC Gerado](./tac.png)
+![TAC Gerado](./prints/tac.png)
 
 **Descrição:**
 - Código intermediário de três endereços gerado
 - Útil para análise e otimização
 - Mostra a representação em baixo nível do programa
+
+#### 6. Execução Paralela (Threads)
+![Paralelismo Visível](./prints/papallel.png)
+
+**Descrição:**
+- Demonstração de execução paralela com threads
+- Intercalação visível entre Thread A e Thread B
+- Exemplo de código com loops pesados para forçar intercalação
+
+#### 7. Sockets - Comunicação entre Computadores
+![WebSocket Status](./prints/socket.png)
+
+**Descrição:**
+- Comunicação em tempo real entre dispositivos na rede
+- Permite executar código de um computador e ver resultados em outro
+- Status de conexão: Conectado / Reconectando / Desconectado
+- Ideal para demonstrações e colaboração remota
 
 ---
 
