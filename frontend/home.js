@@ -296,16 +296,28 @@ SEQ {
 }`,
     
     // === THREADS ===
-    'Hello World (threads)': `VOID thread1() {
+    'Paralelismo Visível': `VOID thread1() {
     INT i;
-    for i = 0; i < 3; i = i + 1 {
+    INT work;
+    for i = 0; i < 10; i = i + 1 {
+        work = 0;
+        INT k;
+        for k = 0; k < 100000; k = k + 1 {
+            work = work + 1;
+        }
         print("Thread A: " + i + "\\n");
     }
 }
 
 VOID thread2() {
     INT j;
-    for j = 5; j < 8; j = j + 1 {
+    INT work;
+    for j = 0; j < 10; j = j + 1 {
+        work = 0;
+        INT k;
+        for k = 0; k < 100000; k = k + 1 {
+            work = work + 1;
+        }
         print("Thread B: " + j + "\\n");
     }
 }
@@ -315,31 +327,46 @@ SEQ {
         thread1();
         thread2();
     }
+    print("\\n=== Execução paralela concluída ===\\n");
 }`,
     
-    'PAR Block': `VOID tarefa1() {
-    print("Tarefa 1 iniciada\\n");
+    'Contador Paralelo': `VOID contador1() {
+    print("[Contador 1] Iniciando...\\n");
     INT i;
-    for i = 0; i < 3; i = i + 1 {
-        print("T1: processando...\\n");
+    INT soma;
+    for i = 0; i < 8; i = i + 1 {
+        soma = 0;
+        INT k;
+        for k = 0; k < 80000; k = k + 1 {
+            soma = soma + 1;
+        }
+        print("[Contador 1] Iteração " + i + "\\n");
     }
-    print("Tarefa 1 concluída\\n");
+    print("[Contador 1] Finalizado\\n");
 }
 
-VOID tarefa2() {
-    print("Tarefa 2 iniciada\\n");
+VOID contador2() {
+    print("[Contador 2] Iniciando...\\n");
     INT j;
-    for j = 0; j < 3; j = j + 1 {
-        print("T2: executando...\\n");
+    INT soma;
+    for j = 0; j < 8; j = j + 1 {
+        soma = 0;
+        INT k;
+        for k = 0; k < 80000; k = k + 1 {
+            soma = soma + 1;
+        }
+        print("[Contador 2] Iteração " + j + "\\n");
     }
-    print("Tarefa 2 concluída\\n");
+    print("[Contador 2] Finalizado\\n");
 }
 
 SEQ {
+    print("=== Iniciando execução paralela ===\\n\\n");
     PAR {
-        tarefa1();
-        tarefa2();
+        contador1();
+        contador2();
     }
+    print("\\n=== Ambos contadores finalizados ===\\n");
 }`,
     
     // === CANAIS ===
@@ -596,8 +623,8 @@ SEQ {
     
     symbolTableOut.innerHTML = '';
     
-    if (!symbolTableData || symbolTableData.total_symbols === 0) {
-      symbolTableOut.textContent = 'Nenhum símbolo declarado.';
+    if (!symbolTableData) {
+      symbolTableOut.textContent = 'Nenhuma informação disponível.';
       return;
     }
     
@@ -608,10 +635,10 @@ SEQ {
     const stats = document.createElement('div');
     stats.className = 'symbol-stats';
     stats.innerHTML = `
-      <span class="meta">Total: ${symbolTableData.total_symbols} símbolos</span>
-      <span class="meta">• ${symbolTableData.variables.length} variáveis</span>
-      <span class="meta">• ${symbolTableData.functions.length} funções</span>
-      <span class="meta">• ${symbolTableData.classes.length} classes</span>
+      <span class="meta">Total: ${symbolTableData.total_symbols || 0} símbolos</span>
+      <span class="meta">• ${(symbolTableData.variables || []).length} variáveis</span>
+      <span class="meta">• ${(symbolTableData.functions || []).length} funções</span>
+      <span class="meta">• ${(symbolTableData.classes || []).length} classes</span>
       ${symbolTableData.total_blocks ? `<span class="meta">• ${symbolTableData.total_blocks} blocos</span>` : ''}
       ${symbolTableData.total_statements ? `<span class="meta">• ${symbolTableData.total_statements} instruções</span>` : ''}
     `;
@@ -633,7 +660,7 @@ SEQ {
       table.className = 'symbol-table';
       
       const thead = document.createElement('thead');
-      thead.innerHTML = '<tr><th>Nome</th><th>Tipo</th><th>Detalhes</th></tr>';
+      thead.innerHTML = '<tr><th>Nome</th><th>Tipo</th><th>Valor</th><th>Detalhes</th></tr>';
       table.appendChild(thead);
       
       const tbody = document.createElement('tbody');
@@ -656,6 +683,22 @@ SEQ {
         
         typeCell.innerHTML = `${typeIcon} <span>${symbol.type}</span>`;
         
+        // Coluna de Valor
+        const valueCell = document.createElement('td');
+        valueCell.className = 'symbol-value';
+        if (symbol.value !== null && symbol.value !== undefined && symbol.value !== 'None') {
+          // Formatar valor baseado no tipo
+          let displayValue = symbol.value;
+          if (typeof symbol.value === 'string' && symbol.value.length > 30) {
+            displayValue = symbol.value.substring(0, 27) + '...';
+          }
+          valueCell.textContent = displayValue;
+          valueCell.style.color = '#4ade80'; // Verde para valores definidos
+        } else {
+          valueCell.textContent = '—';
+          valueCell.style.color = '#6b7280'; // Cinza para undefined
+        }
+        
         const detailsCell = document.createElement('td');
         detailsCell.className = 'symbol-details';
         
@@ -670,14 +713,12 @@ SEQ {
             details.push(`(${params})`);
           }
         }
-        if (symbol.value !== null && symbol.value !== 'None') {
-          details.push(`= ${symbol.value}`);
-        }
         
         detailsCell.textContent = details.join(' ');
         
         row.appendChild(nameCell);
         row.appendChild(typeCell);
+        row.appendChild(valueCell);
         row.appendChild(detailsCell);
         tbody.appendChild(row);
       });

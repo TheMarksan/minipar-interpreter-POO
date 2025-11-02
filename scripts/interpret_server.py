@@ -231,12 +231,10 @@ class SimpleHandler(BaseHTTPRequestHandler):
             return
         
         try:
-            interp = Interpreter()
-
             run_id = uuid.uuid4().hex
             run = {
                 'id': run_id,
-                'interp': interp,
+                'interp': None,  # será criado depois
                 'queue': queue.Queue(),
                 'buf': io.StringIO(),
                 'waiting': False,
@@ -258,12 +256,16 @@ class SimpleHandler(BaseHTTPRequestHandler):
                 run['prompt'] = None
                 return val
 
-            interp.input_provider = run_input_provider
+            # Criar interpreter com output_stream e input_callback
+            interp = Interpreter(
+                output_stream=run['buf'],
+                input_callback=run_input_provider
+            )
+            run['interp'] = interp
 
             def runner():
                 try:
-                    with redirect_stdout(run['buf']):
-                        interp.interpret(ast)
+                    interp.interpret(ast)
                 except Exception as e:
                     try:
                         run['buf'].write(f"\n[Erro na execução]: {e}\n")
@@ -278,14 +280,29 @@ class SimpleHandler(BaseHTTPRequestHandler):
             RUNS[run_id] = run
             th.start()
 
-            # Give the interpreter a tiny moment to start and possibly request input
-            time.sleep(0.02)
+            # Wait for execution to complete or timeout after 5 seconds
+            th.join(timeout=5.0)
+
+            # Atualizar symbol_table com valores após execução
+            # Mesclar: valores do Interpreter + blocos/instruções do SemanticAnalyzer
+            if hasattr(interp, 'symbol_table') and symbol_table_data:
+                runtime_table = interp.symbol_table.to_dict()
+                # Atualizar valores das variáveis
+                for var in symbol_table_data.get('variables', []):
+                    for runtime_var in runtime_table.get('variables', []):
+                        if var['name'] == runtime_var['name']:
+                            var['value'] = runtime_var['value']
+                            break
+                # Manter blocos e instruções do SemanticAnalyzer
+                # (o Interpreter não rastreia isso)
+                response['symbol_table'] = symbol_table_data
 
             # Prepare response: include run_id and current buffered output, and whether it is waiting for input
             response['run_id'] = run_id
             response['exec'] = run['buf'].getvalue()
             response['execucao'] = response['exec']
             response['stdout'] = response['exec']
+            response['saida'] = response['exec']  # Campo que o frontend espera
             response['waiting_for_input'] = run['waiting']
             response['prompt'] = run['prompt']
 

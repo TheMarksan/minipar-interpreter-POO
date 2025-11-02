@@ -489,7 +489,11 @@ class Interpreter:
         
         # Usar lock para garantir que prints de threads diferentes não se misturem
         with self.print_lock:
-            print(value, end='')
+            if self.output_stream:
+                self.output_stream.write(str(value))
+                self.output_stream.flush()
+            else:
+                print(value, end='')
     
     def execute_input(self, node):
         prompt = ""
