@@ -4,10 +4,10 @@
 
 ## 👥 Equipe de Desenvolvimento
 
-- **Aldary Wanderley**
+- **Aldari Wanderley**
 - **Guilherme Coutinho**
 - **Marcos Melo**
-- **Ruan**
+- **Ruan Gomes**
 
 **Professor Orientador:** Arturo Hernandez Dominguez  
 **Disciplina:** Compiladores  
@@ -390,49 +390,106 @@ minipar-interpreter-POO/
 
 A IDE web oferece uma experiência completa de desenvolvimento:
 
+### 📸 Capturas de Tela
+
+#### 1. Interface Principal — Editor, Saída e Tokens
+![Editor e Saída](./inicio_output_tokens.png)
+
+**Descrição:**
+- Editor CodeMirror com syntax highlighting (tema Dracula)
+- Painel de execução mostrando saída do programa e tokens gerados
+
+#### 2. Visualização da AST (Árvore de Sintaxe)
+![Árvore AST](./ast.png)
+
+**Descrição:**
+- Visualizador interativo da AST (modo árvore)
+- Permite alternar para a vista texto e inspecionar nós
+
+#### 3. Tabela de Símbolos
+![Tabela de Símbolos](./symbol_table.png)
+
+**Descrição:**
+- Mostra variáveis, tipos e valores após execução
+- Exibe blocos (SEQ/PAR) e instruções detectadas na análise semântica
+
+#### 4. Análise Semântica
+![Análise Semântica](./semantic.png)
+
+**Descrição:**
+- Validação de tipos, escopos e uso correto de variáveis
+- Mensagens de erro detalhadas quando há problemas
+- Status de sucesso quando código está correto
+
+#### 5. Código TAC (Three-Address Code)
+![TAC Gerado](./tac.png)
+
+**Descrição:**
+- Código intermediário de três endereços gerado
+- Útil para análise e otimização
+- Mostra a representação em baixo nível do programa
+
+---
+
 ### Editor de Código
 - ✅ **CodeMirror** - Editor profissional com syntax highlighting
 - ✅ **Numeração de linhas** - Facilita navegação
 - ✅ **Atalhos** - Ctrl+Enter para executar
 - ✅ **Temas** - Modo claro e escuro
+- ✅ **Modal ampliado** - Edição em tela cheia com syntax highlighting
 
 ### Painéis de Resultado
-Cada painel é expansível/colapsável:
+Cada painel é expansível/colapsável com botão ⛶:
 
 1. **📊 Léxico (Tokens)**
    - Lista todos os tokens identificados
    - Mostra tipo e valor de cada token
    - Contador de tokens no rodapé
+   - Botão para copiar análise léxica
 
 2. **🌳 AST (Árvore Sintática)**
    - **Modo Árvore**: Visualização hierárquica interativa
    - **Modo Texto**: Representação textual com highlighting
    - Toggle entre os dois modos
    - Navegação visual da estrutura do programa
+   - Modal expansível para melhor visualização
 
 3. **✅ Semântico**
    - Validações de tipo, escopo e uso
    - Mensagens de erro detalhadas
    - Status de sucesso/falha
+   - Modal expansível
 
 4. **📋 Tabela de Símbolos**
-   - Variáveis, funções e classes declaradas
-   - Informações de tipo e escopo
-   - Estatísticas (total de símbolos, blocos, etc.)
+   - **Variáveis** com nome, tipo e **valor runtime** (verde para definidos!)
+   - **Funções** com parâmetros e tipo de retorno
+   - **Classes** com atributos e métodos
+   - **Blocos** (SEQ, PAR) com contagem
+   - **Instruções** (PRINT, IF, FOR, WHILE) com contagem
+   - Estatísticas completas de símbolos
+   - Modal expansível
 
 5. **⚡ TAC (Three-Address Code)**
    - Código intermediário gerado
    - Representação de baixo nível
+   - Contador de instruções TAC
+   - Modal expansível
 
 6. **▶️ Saída de Execução**
    - Output do programa (print, etc.)
+   - **Paralelismo visível** - intercalação de threads
    - Erros de runtime
+   - Modal expansível
 
 ### Recursos Adicionais
+### Recursos da Interface
+
 - 📁 **Exemplos Prontos** - Dropdown com programas categorizados
-- 🌐 **WebSocket Status** - Indicador de conexão em tempo real
+-  **WebSocket Status** - Indicador de conexão em tempo real
 - 🧹 **Limpar** - Reseta editor e resultados
-- 📤 **Copiar Tokens** - Exporta análise léxica
+- 📤 **Exportar** - Copiar tokens, AST, etc.
+- ⛶ **Ampliar** - Modal de tela cheia para cada painel
+- 🎨 **Temas** - Alternar entre modo claro e escuro
 
 ---
 
@@ -650,20 +707,7 @@ Problemas comuns:
 - Virtualenv path errado
 - Dependências não instaladas
 
-
-
 ---
-
-## 📄 Licença
-
-Este projeto foi desenvolvido para fins acadêmicos como parte da disciplina de Compiladores.
-
----
-
-## 🔗 Links Úteis
-
-- 📖 [Especificação da Linguagem (BNF)](src/BNF.md)
-
 
 ## 📊 Status do Projeto
 
@@ -695,6 +739,21 @@ Este projeto foi desenvolvido para fins acadêmicos como parte da disciplina de 
 - Scripts Bash
 - PythonAnywhere (WSGI)
 - Git
+
+---
+
+## 🔗 Links Úteis
+
+- 📖 [Especificação da Linguagem (BNF)](src/BNF.md)
+- 📘 [Guia de Deploy PythonAnywhere](PYTHONANYWHERE.md)
+
+---
+
+## 📄 Licença
+
+Este projeto foi desenvolvido para fins acadêmicos como parte da disciplina de Compiladores da UFAL.
+
+**MIT License** - Veja [LICENSE](LICENSE) para mais detalhes.
 
 ---
 
