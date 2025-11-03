@@ -280,8 +280,8 @@ class SimpleHandler(BaseHTTPRequestHandler):
             RUNS[run_id] = run
             th.start()
 
-            # Wait for execution to complete or timeout after 5 seconds
-            th.join(timeout=5.0)
+            # Wait for execution to complete or timeout after 300 seconds (5 minutes)
+            th.join(timeout=300.0)
 
             # Atualizar symbol_table com valores após execução
             # Mesclar: valores do Interpreter + blocos/instruções do SemanticAnalyzer
